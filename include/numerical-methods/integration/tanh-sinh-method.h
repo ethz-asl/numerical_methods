@@ -96,11 +96,12 @@ private:
   	}
   	const Type a = std::log10(std::abs(values[i + 1] - values[i]));
   	const Type b = std::log10(std::abs(values[i + 1] - values[i - 1]));
-  	if (isNaN(a) || isNaN(b)) {
+  	if (isUndef<Type>(a) || isUndef<Type>(b)) {
   	  return error_;
   	}
-  	Type digits = std::max(a * a / b, 2.0 * a);
-  	digits = std::min(std::max(digits, std::log10(getEps<Type>())), 0.0);
+  	Type digits = std::max<Type>(a * a / b, 2.0 * a);
+  	digits = std::min<Type>(std::max<Type>(digits, 
+            std::log10(getEps<Type>())), 0.0);
   	return std::pow(0.1, - static_cast<int>(std::round(digits)));
   }
   

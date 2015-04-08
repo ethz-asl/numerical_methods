@@ -9,6 +9,9 @@ template <typename Type>
 class IntegrationMethod {
 public:
   
+  IntegrationMethod() {}
+  virtual ~IntegrationMethod() {}
+  
   // Integrate a function over a given interval.
   template <class Function>
   Type integrate(const Function& fun, Type a, Type b) const {

@@ -1,6 +1,7 @@
 #ifndef NUMERICAL_METHODS_COMMON_DEFINITIONS_H_
 #define NUMERICAL_METHODS_COMMON_DEFINITIONS_H_
 
+#include <cmath>
 #include <limits>
 
 #include <glog/logging.h>
@@ -15,10 +16,20 @@ inline constexpr Type getUndef() {
 }
 
 template <typename Type>
+inline bool isUndef(Type val) {
+  return std::isnan(val);
+}
+
+template <typename Type>
 inline constexpr Type getInf() {
   CHECK(std::numeric_limits<Type>::has_infinity()) 
       << "Implementation of infinity is not available.";
   return std::numeric_limits<Type>::infinity();
+}
+
+template <typename Type>
+inline bool isInf(Type val) {
+  return std::isinf(val);
 }
 
 template <typename Type>
