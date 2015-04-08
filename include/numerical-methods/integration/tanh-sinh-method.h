@@ -10,27 +10,27 @@
 
 namespace numerical_methods {
 
-class TanhSinhMethod : public IntegrationMethod {
+template <typename Type>
+class TanhSinhMethod : public IntegrationMethod<Type> {
 public:
   
-  TanhSinhMethod(double precision, std::size_t levels) : 
-      precision_(precision), levels_(levels) {
-  	CHECK_GT(precision, 0.0);
-  	CHECK_LE(levels, 15);
-  	initialize();
+  TanhSinhMethod(Type error, std::size_t levels) : 
+      error_(error), levels_(levels) {
+  	CHECK_GT(error, 0.0) << "Desired error must be positive.";
+  	initNodes();
   }
   
   // Integrate a function over a given interval.
   template <class Function>
-  double integrate(const Function& fun, double a, double b) const {
+  Type integrate(const Function& fun, Type a, Type b) const {
   	
-  	const double c = (b + a) / 2.0;
-  	const double d = (b - a) / 2.0;
+  	const Type c = (b + a) / 2.0;
+  	const Type d = (b - a) / 2.0;
   	
-  	std::vector<double> values;
+  	std::vector<Type> values;
   	
-  	double sum = 0.0;
-  	double step = 1.0;
+  	Type sum = 0.0;
+  	Type step = 1.0;
   	for (std::size_t k = 0; k < levels_; ++k) {
   	  
   	  const std::size_t stride = std::pow(2, levels_ - k - 1);
@@ -48,8 +48,7 @@ public:
   	  step /= 2.0;
   	  values.push_back(step * sum);
   	  
-  	  const double error = evalError(values);
-  	  if error <= precision_ {
+  	  if (evalError(values) <= error_) {
   	  	return *values.end();
   	  }
   	  
@@ -61,46 +60,47 @@ public:
   
 private:
   
-  double precision_;
-  int levels_;
+  Type error_;
+  std::size_t levels_;
   
   struct Node {
-  	double point;
-  	double weight;
-  	Node(std::size_t k, double h) {
-  	  const double t = k * h;
-  	  const double u = (std::pi() * std::sinh(t)) / 2.0;
-  	  const double v = std::cosh(u);
-  	  point = std::sinh(u) / v;
-  	  weight = (std::pi() / 2.0) * std::cosh(t) / (v * v);
+    Type point;
+    Type weight;
+    Node(std::size_t k, Type h) {
+      const Type t = k * h;
+      const Type u = (getPi<Type>() * std::sinh(t)) / 2.0;
+      const Type v = std::cosh(u);
+      point = std::sinh(u) / v;
+      weight = (getPi<Type>() / 2.0) * std::cosh(t) / (v * v);
     }
   };
   
   std::vector<Node> nodes_;
   
-  void initialize() {
+  void initNodes() {
     std::size_t n = 20 * std::pow(2, levels_) + 1;
-    const double h = 1.0 / std::pow(2, levels_);
+    const Type h = 1.0 / std::pow(2, levels_);
     for (std::size_t k = 0; k < n; ++k) {
-  	  nodes_.push_back(Node(k, h));
-  	  if std::abs(node.point - 1.0) <= precision_ * precision_ {
-  	    break;
-  	  }
+      Node node(k, h);
+      nodes_.push_back(node);
+      if (std::abs(node.point - 1.0) <= error_ * error_) {
+        break;
+      }
     }
   }
   
-  double evalError(const std::vector<double>& values) const {
+  Type evalError(const std::vector<Type>& values) const {
   	const std::size_t i = values.size() - 1;
   	if (i <= 0) {
   	  return 1.0;
   	}
-  	const double a = std::log10(std::abs(values[i + 1] - values[i]));
-  	const double b = std::log10(std::abs(values[i + 1] - values[i - 1]));
+  	const Type a = std::log10(std::abs(values[i + 1] - values[i]));
+  	const Type b = std::log10(std::abs(values[i + 1] - values[i - 1]));
   	if (isNaN(a) || isNaN(b)) {
-  	  return precision_;
+  	  return error_;
   	}
-  	double digits = std::max(a * a / b, 2.0 * a);
-  	digits = std::min(std::max(digits, std::log10(getEps())), 0.0);
+  	Type digits = std::max(a * a / b, 2.0 * a);
+  	digits = std::min(std::max(digits, std::log10(getEps<Type>())), 0.0);
   	return std::pow(0.1, - static_cast<int>(std::round(digits)));
   }
   
