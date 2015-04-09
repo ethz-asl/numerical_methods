@@ -33,43 +33,44 @@ public:
   // Integrate function over given interval.
   template <class Function>
   Type integrate(const Function& function, Type a, Type b) const {
-  	
-  	const Type c = (b + a) / 2.0;
-  	const Type d = (b - a) / 2.0;
-  	
-  	std::vector<Type> values;
-  	
-  	Type sum = 0.0;
-  	Type step = 1.0;
-  	for (int k = 0; k < order_; ++k) {
-  	  
-      // Update sum.
-  	  const int stride = std::pow(2, order_ - k - 1);
-  	  for (int i = 0; i < nodes_.size(); i += stride) {
-  	    if ((k == 0) || (i % (2 * stride) != 0)) {
-  	      const Node& node = nodes_[i];
-  	      if (node.point == 0.0) {
-  	        sum += node.weight * function(c) * d;
-  	      } else {
-  	      	sum += node.weight * function(c - d * node.point) * d 
-  	      	    + node.weight * function(c + d * node.point) * d;
-  	      }
-  	    }
-  	  }
+    
+    const Type c = (b + a) / 2.0;
+    const Type d = (b - a) / 2.0;
+    
+    std::vector<Type> values;
+    
+    Type sum = 0.0;
+    Type step = 1.0;
+    
+    for (int k = 0; k < order_; ++k) {
       
-  	  step /= 2.0;
-  	  values.push_back(step * sum);
-  	  
+      // Update sum.
+      const int stride = std::pow(2, order_ - k - 1);
+      for (int i = 0; i < nodes_.size(); i += stride) {
+        if ((k == 0) || (i % (2 * stride) != 0)) {
+          const Node& node = nodes_[i];
+          if (node.point == 0.0) {
+            sum += node.weight * function(c) * d;
+          } else {
+            sum += node.weight * function(c - d * node.point) * d 
+                + node.weight * function(c + d * node.point) * d;
+          }
+        }
+      }
+      
+      step /= 2.0;
+      values.push_back(step * sum);
+      
       // Estimate error and break if desired error achieved.
-  	  if (estimError(values) <= this->getError()) {
-  	  	return *values.end();
-  	  }
-  	  
-  	}
+      if (estimError(values) <= this->getError()) {
+        return *values.end();
+      }
+      
+    }
     
     LOG(WARNING) << "Maximum order reached. Result may be inaccurate.";
-  	return *values.end();
-  	
+    return *values.end();
+    
   }
   
 private:

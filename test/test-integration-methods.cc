@@ -14,7 +14,7 @@ struct Problem {
 Problem(const std::function<Type(Type)>& function, Type a, Type b, 
     Type value) : function(function), a(a), b(b), value(value) {};
 typedef Type type;
-const std::function<Type(Type)>& function;
+const std::function<Type(Type)> function;
 const Type a, b;
 const Type value;
 };
@@ -24,7 +24,7 @@ template <typename Type>
 std::vector<Problem<Type>> defProblems() {
   std::vector<Problem<Type>> problems;
   {
-    const std::function<Type(Type)> function = [](Type x) {
+    const std::function<Type(Type)> function = [](Type x) -> Type {
       return x * std::log1p(x);
     };
     const Type a = 0.0, b = 1.0;
@@ -33,7 +33,7 @@ std::vector<Problem<Type>> defProblems() {
     problems.push_back(problem);
   }
   {
-    const std::function<Type(Type)> function = [](Type x) {
+    const std::function<Type(Type)> function = [](Type x) -> Type {
       return (x * x) * std::atan(x);
     };
     const Type a = 0.0, b = 1.0;
