@@ -26,11 +26,96 @@ std::vector<Problem<Type>> defProblems() {
   std::vector<Problem<Type>> problems;
   {
     
-    const std::function<Type(Type)> function = [](Type x) -> Type {
-      return std::log(x) + std::log(std::log1p(x));
+    // Log-normalization constant of uniform distribution.
+    const Type alpha = 2.0, beta = 5.0;
+    const std::function<Type(Type)> function = [alpha, beta](Type x) -> Type {
+      return 0.0;
+    };
+    const Type a = alpha, b = beta;
+    const Type value = std::log(beta - alpha);
+    const Type tolerance = 0.0;
+    Problem<Type> problem(function, a, b, value, tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Log-normalization constant of beta distribution.
+    const Type alpha = 5.0, beta = 5.0;
+    const std::function<Type(Type)> function = [alpha, beta](Type x) -> Type {
+      x = std::min<Type>(x, 1.0 - getEps<Type>());
+      x = std::max<Type>(x, getEps<Type>());
+      return (alpha - 1.0) * std::log(x) + (beta - 1.0) * std::log(1.0 - x);
     };
     const Type a = 0.0, b = 1.0;
-    const Type value = std::log(1.0 / 4.0);
+    const Type value = std::lgamma(alpha) + std::lgamma(beta) 
+        - std::lgamma(alpha + beta);
+    const Type tolerance = 0.0;
+    Problem<Type> problem(function, a, b, value, tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Log-normalization constant of logit normal distribution.
+    const Type mu = 0.0, sigma = 2.0;
+    const std::function<Type(Type)> function = [mu, sigma](Type x) -> Type {
+      x = std::min<Type>(x, 1.0 - getEps<Type>());
+      x = std::max<Type>(x, getEps<Type>());
+      return - std::log(x * (1.0 - x)) 
+          - std::pow((std::log(x / (1.0 - x)) - mu) / sigma, 2) / 2.0;
+    };
+    const Type a = 0.0, b = 1.0;
+    const Type value = std::log(2.0 * getPi<Type>()) / 2.0 + std::log(sigma);
+    const Type tolerance = 0.0;
+    Problem<Type> problem(function, a, b, value, tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Log-normalization constant of semicircle distribution.
+    const Type rho = 2.0;
+    const std::function<Type(Type)> function = [rho](Type x) -> Type {
+      x = std::min<Type>(x, rho - getEps<Type>());
+      x = std::max<Type>(x, - rho + getEps<Type>());
+      return std::log(std::pow(rho, 2) - std::pow(x, 2)) / 2.0;
+    };
+    const Type a = - rho, b = rho;
+    const Type value = std::log(getPi<Type>() / 2.0) + 2.0 * std::log(rho);
+    const Type tolerance = 0.0;
+    Problem<Type> problem(function, a, b, value, tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Log-normalization constant of raised cosine distribution.
+    const Type mu = 0.0, sigma = 3.0;
+    const std::function<Type(Type)> function = [mu, sigma](Type x) -> Type {
+      x = std::min<Type>(x, mu + sigma / 2.0 - getEps<Type>());
+      x = std::max<Type>(x, mu - sigma / 2.0 + getEps<Type>());
+      return std::log1p(std::cos(2.0 * getPi<Type>() * (x - mu) / sigma));
+    };
+    const Type a = mu - sigma / 2.0, b = mu + sigma / 2.0;
+    const Type value = std::log(sigma);
+    const Type tolerance = 0.0;
+    Problem<Type> problem(function, a, b, value, tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Log-normalization constant of Kumaraswamy distribution.
+    const Type alpha = 5.0, beta = 1.0;
+    const std::function<Type(Type)> function = [alpha, beta](Type x) -> Type {
+      x = std::min<Type>(x, 1.0 - getEps<Type>());
+      x = std::max<Type>(x, getEps<Type>());
+      return (alpha - 1.0) * std::log(x) 
+          + (beta - 1.0) * std::log(1.0 - std::pow(x, alpha));
+    };
+    const Type a = 0.0, b = 1.0;
+    const Type value = - std::log(alpha) - std::log(beta);
     const Type tolerance = 0.0;
     Problem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
