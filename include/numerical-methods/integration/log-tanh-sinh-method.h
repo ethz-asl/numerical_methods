@@ -1,5 +1,5 @@
-#ifndef NUMERICAL_METHODS_INTEGRATION_TANH_SINH_METHOD_H_
-#define NUMERICAL_METHODS_INTEGRATION_TANH_SINH_METHOD_H_
+#ifndef NUMERICAL_METHODS_INTEGRATION_LOG_TANH_SINH_METHOD_H_
+#define NUMERICAL_METHODS_INTEGRATION_LOG_TANH_SINH_METHOD_H_
 
 #include <cmath>
 
@@ -11,15 +11,15 @@
 namespace numerical_methods {
 
 template <typename Type>
-class TanhSinhMethod : public IntegrationMethod<Type> {
+class LogTanhSinhMethod : public IntegrationMethod<Type> {
 public:
   
-  explicit TanhSinhMethod(Type error) : 
+  explicit LogTanhSinhMethod(Type error) : 
       IntegrationMethod<Type>(error), order_(10) {
     initNodes();
   }
   
-  TanhSinhMethod(Type error, int order) : 
+  LogTanhSinhMethod(Type error, int order) : 
       IntegrationMethod<Type>(error), order_(order) {
     CHECK_GT(order, 0) << "Order must be positive.";
     initNodes();
@@ -43,7 +43,7 @@ public:
     values.reserve(order_);
     
     Type step = 1.0;
-    Type sum = 0.0;
+    Type sum = - getInf<Type>();
     for (int k = 0; k < order_; ++k) {
       
       // Update sum.
@@ -51,18 +51,18 @@ public:
       for (int i = 0; i < nodes_.size(); i += stride) {
         if ((k == 0) || (i % (2 * stride) != 0)) {
           const Node& node = nodes_[i];
-          const Type weight = node.weight * d;
+          const Type weight = node.weight + std::log(d);
           if (node.point == 0.0) {
-            sum += weight * function(c);
+            sum = add(sum, function(c) + weight);
           } else {
-            sum += weight * function(c - d * node.point);
-            sum += weight * function(c + d * node.point);
+            sum = add(sum, function(c - d * node.point) + weight);
+            sum = add(sum, function(c + d * node.point) + weight);
           }
         }
       }
       
       step /= 2.0;
-      values.push_back(step * sum);
+      values.push_back(std::log(step) + sum);
       
       // Estimate error and break if desired error achieved.
       if (estimError(values) <= this->getError()) {
@@ -87,7 +87,8 @@ private:
       const Type u = (getPi<Type>() / 2.0) * std::sinh(t);
       const Type v = std::cosh(u);
       point = std::sinh(u) / v;
-      weight = (getPi<Type>() / 2.0) * std::cosh(t) / std::pow(v, 2);
+      weight = std::log(getPi<Type>() / 2.0) + std::log(std::cosh(t)) 
+          - std::log(std::pow(v, 2));
     }
   };
   
@@ -126,8 +127,12 @@ private:
     return std::pow(Type(0.1), - static_cast<int>(std::round(precision)));
   }
   
+  static Type add(Type x, Type y) {
+    return std::max(x, y) + std::log1p(std::exp(- std::abs(x - y)));
+  }
+  
 }; // TanhSinhMethod
 
 } // namespace numerical_methods
 
-#endif // NUMERICAL_METHODS_INTEGRATION_TANH_SINH_METHOD_H_
+#endif // NUMERICAL_METHODS_INTEGRATION_LOG_TANH_SINH_METHOD_H_

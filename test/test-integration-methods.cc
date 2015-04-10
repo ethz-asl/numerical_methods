@@ -248,7 +248,7 @@ protected:
       errors = {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
 };
 
-// TODO(gabrieag): Find out why test fails with float and long double.
+// TODO(gabrieag): Find out why test fails with quadruple-precision.
 typedef testing::Types<TanhSinhMethod<double>> Types;
 
 TYPED_TEST_CASE(IntegrationMethodTest, Types);

@@ -22,8 +22,6 @@ inline bool isUndef(Type val) {
 
 template <typename Type>
 inline constexpr Type getInf() {
-  CHECK(std::numeric_limits<Type>::has_infinity()) 
-      << "Implementation of infinity is not available.";
   return std::numeric_limits<Type>::infinity();
 }
 

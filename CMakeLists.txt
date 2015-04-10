@@ -11,5 +11,8 @@ cs_add_library(${PROJECT_NAME} src/numerical-methods.cc)
 catkin_add_gtest(test_integration_methods test/test-integration-methods.cc)
 target_link_libraries(test_integration_methods ${PROJECT_NAME} pthread)
 
+catkin_add_gtest(test_log_integration_methods test/test-log-integration-methods.cc)
+target_link_libraries(test_log_integration_methods ${PROJECT_NAME} pthread)
+
 cs_install()
 cs_export()
