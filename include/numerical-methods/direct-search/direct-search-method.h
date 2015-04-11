@@ -17,14 +17,17 @@ public:
   typedef Type type;
   typedef Size size;
   
-  static constexpr bool dynamic = std::is_same<Size, Eigen::Dynamic>::value;
-  
-  explicit DirectSearchMethod(int dimension) : dimension_(dimension) {
-    static_assert(dynamic);
-    CHECK_GT(dimension, 0) << "Dimension must be positive.";
+  template <bool Static = !std::is_same<Size, Eigen::Dynamic>::value>
+  DirectSearchMethod(typename std::enable_if<Static>::type* = nullptr) : 
+      dimension_(Size) {
+    initialize();
   }
-  explicit DirectSearchMethod() : dimension_(Size) {
-    static_assert(!dynamic);
+  template <bool Dynamic = std::is_same<Size, Eigen::Dynamic>::value>
+  explicit DirectSearchMethod(int dimension, 
+      typename std::enable_if<Dynamic>::type* = nullptr) : 
+      dimension_(dimension) {
+    CHECK_GT(dimension, 0) << "Dimension must be positive.";
+    initialize(dimension);
   }
   virtual ~DirectSearchMethod() {}
   
@@ -98,6 +101,11 @@ public:
   template <class Function>
   void findMinimum(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {}
+  
+protected:
+  
+  virtual initialize() {};
+  virtual initialize(int dimension) {};
   
 private:
   

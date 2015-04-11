@@ -38,24 +38,26 @@ template <typename Type, typename Size>
 class NelderMeadMethod : public DirectSearchMethod {
 public:
   
-  explicit NelderMeadMethod(int dimension) : 
-        DirectSearchMethod<Type, Size>(dimension) {
-    points_.resize(dimension, dimension + 1);
-  }
-  explicit NelderMeadMethod() : DirectSearchMethod<Type, Size>() {}
-  
   template <class Function>
   void findMinimum(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
     
   }
   
+protected:
+  
+  virtual initialize() {
+    
+  }
+  virtual initialize(int dimension) {
+    for (auto& point : points_) {
+      point.first.resize(dimension, dimension + 1);
+    }
+  }
+  
 private:
   
-  typedef typename std::conditional<dynamic, 
-      std::unordered_map<Eigen::Matrix<Type, Size, Size>, Type>, 
-      std::unordered_map<Eigen::Matrix<Type, Size, Size + 1>, Type>>::type 
-          values_;
+  std::unordered_map<Eigen::Matrix<Type, Size, 1>, Type> points_;
   
 }; // NelderMeadMethod
 
