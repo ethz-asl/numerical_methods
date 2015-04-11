@@ -46,18 +46,22 @@ public:
   
 protected:
   
-  virtual initialize() {
-    
-  }
   virtual initialize(int dimension) {
-    for (auto& point : points_) {
-      point.first.resize(dimension, dimension + 1);
-    }
+    points_.resize(dimension, dimension + 1);
+    values_.resize(dimension + 1);
   }
   
 private:
   
-  std::unordered_map<Eigen::Matrix<Type, Size, 1>, Type> points_;
+  static constexpr bool dynamic = std::is_same<Size, Eigen::Dynamic>::value;
+  
+  std::conditional<dynamic, 
+      Eigen::Matrix<Type, Size, Size>, 
+      Eigen::Matrix<Type, Size, Size + 1>>::type points_;
+  
+  std::conditional<dynamic, 
+      Eigen::Matrix<Type, Size, 1>, 
+      Eigen::Matrix<Type, Size + 1, 1>>::type values_;
   
 }; // NelderMeadMethod
 
