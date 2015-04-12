@@ -42,13 +42,79 @@ public:
   void findMinimum(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
     
+    std::vector<std::size_t> indices(dimension + 1);
+    for (std::size_t n = 0; n <= dimension; ++n) {
+      indices[n] = n;
+    }
+    
+    Eigen::Matrix<Type, Size, 1> centroid;
+    centroid.resize(dimension);
+    
+    // Sort points in simplex according to value.
+    std::sort(indices.begin(), indices.end(), 
+        [&values_](std::size_t i, std::size_t j) {
+          return values_[i] < values_[j];
+        });
+    
+    // Compute centroid.
+    for (std::size_t n = 0; n <= dimension; ++n) {
+      centroid += points_.col(n);
+    }
+    centroid /= dimension;
+    
+    // Store best, second-worst and worst points.
+    const std::size_t i = indices[0];
+    const std::size_t j = indices[dimension - 1];
+    const std::size_t k = indices[dimension];
+    
+    // Reflect point.
+    Eigen::Matrix<Type, Size, 1> 
+        ref_point = centroid + alpha * (centroid - points_.col(k));
+    Type ref_value = function(ref_point);
+    if ((ref_value < values_[j]) && (ref_value > values_[i])) {
+      points_.col(k) = ref_point;
+      values_[k] = ref_value;
+    } else if (ref_value < values_[i]) {
+      
+      // Expand point.
+      Eigen::Matrix<Type, Size, 1> 
+          exp_point = centroid + gamma * (centroid - points_.col(k));
+      Type exp_value = function(exp_point);
+      if (exp_value < ref_value) {
+        points_.col(k) = exp_point;
+        values_[k] = exp_value;
+      } else {
+        points_.col(k) = ref_point;
+        values_[k] = ref_value;
+      }
+      
+    } else {
+      
+      // Contract point.
+      Eigen::Matrix<Type, Size, 1> 
+          con_point = centroid + rho * (centroid - points_.col(k));
+      Type con_value = function(con_point);
+      if (con_value < values_[k]) {
+        points_.col(k) = con_point;
+        values_[k] = con_value;
+      } else {
+        
+        Eigen::Matrix<Type, Size, 1> x = points_.col(i);
+        for (std::size_t n = 0; n < dimension; ++n) {
+          points_.col(n) = x + sigma * (points_.col(n) - x);
+          values_[n] = function(points_.col(n));
+        }
+        
+      }
+      
+    }
+    
   }
   
 protected:
-  
-  virtual initialize(int dimension) {
-    points_.resize(dimension, dimension + 1);
-    values_.resize(dimension + 1);
+  virtual initialize() {
+    points_.resize(dimension_, dimension_ + 1);
+    values_.resize(dimension_ + 1);
   }
   
 private:

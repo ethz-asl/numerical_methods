@@ -27,7 +27,7 @@ public:
       typename std::enable_if<Dynamic>::type* = nullptr) : 
       dimension_(dimension) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
-    initialize(dimension);
+    initialize();
   }
   virtual ~DirectSearchMethod() {}
   
@@ -103,9 +103,7 @@ public:
       const Eigen::Matrix<Type, Size, 1>& point) const {}
   
 protected:
-  
   virtual initialize() {};
-  virtual initialize(int dimension) {};
   
 private:
   
@@ -113,7 +111,7 @@ private:
   DirectSearchMethod(const DirectSearchMethod&) = delete;
   DirectSearchMethod& operator=(const DirectSearchMethod&) = delete;
   
-  int dimension_;
+  const int dimension_;
   
 }; // DirectSearchMethod
 
