@@ -10,6 +10,12 @@
 
 namespace numerical_methods {
 
+// This class implements the tanh-sinh integration method, as described in 
+// Bailey et al. (2005), simplified for fixed-precision arithmetic.
+// 
+// D. H. Bailey, K. Jeyabalan, and X. S. Li, "A Comparison of Three High-
+// precision Quadrature Schemes," Experimental Mathematics, vol. 14, no. 3, 
+// pp. 317-329 (2005).
 template <typename Type>
 class TanhSinhMethod : public IntegrationMethod<Type> {
 public:

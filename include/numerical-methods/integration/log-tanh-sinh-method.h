@@ -10,8 +10,17 @@
 
 namespace numerical_methods {
 
-// This class implements the tanh-sinh integration method, as described in 
-// Bailey et al. (2005), simplified for fixed-precision arithmetic.
+// This class implements a variation of the tanh-sinh integration method, as 
+// described in Bailey et al. (2005). This variation estimates the natural 
+// logarithm of the integral of an exponential, i.e.
+// 
+//         /b
+// y = ln | exp(f(x)) dx
+//       /a
+// 
+// This method is more accurate and numerically more stable than evaluating the 
+// integral, and then computing the logarithm. The implementation is also 
+// simplified for fixed-precision arithmetic.
 // 
 // D. H. Bailey, K. Jeyabalan, and X. S. Li, "A Comparison of Three High-
 // precision Quadrature Schemes," Experimental Mathematics, vol. 14, no. 3, 
