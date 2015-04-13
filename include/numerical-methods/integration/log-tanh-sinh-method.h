@@ -59,6 +59,7 @@ public:
     
     Type step = 1.0;
     Type sum = - getInf<Type>();
+    Type error = getUndef<Type>();
     for (int k = 0; k < order_; ++k) {
       
       // Update sum.
@@ -80,12 +81,15 @@ public:
       values.push_back(std::log(step) + sum);
       
       // Estimate error and break if desired error achieved.
-      if (estimError(values) <= this->getError()) {
+      error = estimError(values);
+      if (error <= this->getError()) {
         return values.back();
       }
       
     }
     
+    LOG_IF(WARNING, error <= this->getError())
+        << "Maximum refinement reached. Results may be inaccurate.";
     return values.back();
     
   }
