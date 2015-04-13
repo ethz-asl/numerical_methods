@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 #include <glog/logging.h>
 
@@ -10,8 +11,6 @@ namespace numerical_methods {
 
 template <typename Type>
 inline constexpr Type getUndef() {
-  CHECK(std::numeric_limits<Type>::has_quiet_NaN()) 
-      << "Implementation of quiet not-a-number is not available.";
   return std::numeric_limits<Type>::quiet_NaN();
 }
 
