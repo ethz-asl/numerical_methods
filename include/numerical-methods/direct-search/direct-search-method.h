@@ -42,22 +42,6 @@ public:
                 max_iterations_(100), 
                 abs_tolerance_(1.0e-6), 
                 rel_tolerance_(1.0e-3) {}
-    Options(int min_iterations, 
-            int max_iterations, 
-            Type abs_tolerance, 
-            Type rel_tolerance) : min_iterations_(min_iterations), 
-                                  max_iterations_(max_iterations), 
-                                  abs_tolerance_(abs_tolerance),  
-                                  rel_tolerance_(rel_tolerance) {
-      CHECK_GT(min_iterations, 0) 
-          << "Minimum number of iterations must be positive.";
-      CHECK_GT(max_iterations, 0) 
-          << "Maximum number of iterations must be positive.";
-      CHECK_GT(abs_tolerance, Type(0.0)) 
-          << "Absolute tolerance must be positive.";
-      CHECK_GT(rel_tolerance, Type(0.0)) 
-          << "Relative tolerance must be positive.";
-    }
     inline int getMinIterations() const {
       return min_iterations_;
     }
@@ -99,7 +83,7 @@ public:
   
   // Find minimum of function.
   template <class Function>
-  void findMinimum(const Function& function, 
+  Eigen::Matrix<Type, Size, 1> findMinimum(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {}
   
 protected:
