@@ -70,32 +70,29 @@ public:
             return values_(i) < values_(j);
           });
       
-      if (iter > this->options.getMinIterations()) {
-        
-        Type norm, dist = 0.0, 0.0;
-        for (std::size_t m = 0; m <= dimension; ++m) {
-          norm = std::max(norm, points_.col(m).norm());
-          for (std::size_t n =0; n <= dimension; ++n) {
-            if (m != n) {
-              dist = std::max(dist, (points_.col(m) - points_.col(n)).norm());
-            }
-          }
-        }
-        is_converged = dist <= std::max(this->options.getAbsTolerance(), 
-            this-options.getRelTolerance() * norm);
-        
-        if (is_converged) {
-          break;
-        }
-        
-      }
-      
       // Compute centroid.
       centroid.setZero();
       for (std::size_t n = 0; n <= dimension; ++n) {
         centroid += points_.col(n);
       }
       centroid /= static_cast<Type>(dimension);
+      
+      if (iter > this->options.getMinIterations()) {
+        
+        // Compute maximum distance to centroid.
+        Type dist = 0.0;
+        for (std::size_t n = 0; n <= dimension; ++n) {
+          dist = std::max(dist, (centroid - points_.col(n)).norm());
+        }
+        
+        // Check convergence.
+        is_converged = dist <= std::max(this->options.getAbsTolerance(), 
+            this-options.getRelTolerance() * centroid.norm());
+        if (is_converged) {
+          break;
+        }
+        
+      }
       
       // Store indices to best, second-worst and worst points.
       const std::size_t i = ind[0];
