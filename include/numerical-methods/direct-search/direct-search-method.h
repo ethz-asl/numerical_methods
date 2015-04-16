@@ -15,6 +15,7 @@ class DirectSearchMethod {
 public:
   
   typedef Type type;
+  static constexpr int size = Size;
   
   template <bool Static = Size != Eigen::Dynamic>
   DirectSearchMethod(typename std::enable_if<Static>::type* = nullptr) : 

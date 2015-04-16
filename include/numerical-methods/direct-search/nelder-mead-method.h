@@ -12,6 +12,16 @@
 
 namespace numerical_methods {
 
+template <typename Type, int Size>
+Eigen::Matrix<Type, Size, 1> operator-(const Eigen::Matrix<Type, Size, 1>& x, 
+    Type a) {
+  Eigen::Matrix<Type, Size, 1> y(x);
+  for (std::size_t i = 0; i < y.size(); ++i) {
+    y(i) -= a;
+  }
+  return y;
+}
+
 // This class implements multi-dimensional minimization by the downhill simplex 
 // search method of Nelder and Mead (1965), as implemented by O'Neill (1971), 
 // with subsequent comments by Chambers and Ertel (1974), Benyon (1976) and 
@@ -39,6 +49,14 @@ template <typename Type, int Size>
 class NelderMeadMethod : public DirectSearchMethod<Type, Size> {
 public:
   
+  template <bool Static = Size != Eigen::Dynamic>
+  NelderMeadMethod(typename std::enable_if<Static>::type* = nullptr) : 
+      DirectSearchMethod<Type, Size>() {}
+  template <bool Dynamic = Size == Eigen::Dynamic>
+  explicit NelderMeadMethod(int dimension, 
+      typename std::enable_if<Dynamic>::type* = nullptr) : 
+      DirectSearchMethod<Type, Size>(dimension) {}
+  
   template <class Function>
   Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
@@ -57,11 +75,11 @@ public:
     values.resize(dimension + 1);
     
     // Initialize simplex.
-    const Type extent = this->options.getInitExtent();
-    points.fill(point - extent / static_cast<Type>(dimension + 1));
+    const Type length = this->options.getInitLength();
     values(0) = function(points.col(0));
     for (std::size_t n = 1; n <= dimension; ++n) {
-        points(n, n) += extent;
+        points.col(n) = point - length / static_cast<Type>(dimension + 1);
+        points(n, n) += length;
         values(n) = function(points.col(n));
     }
     
@@ -99,7 +117,7 @@ public:
         
         // Check convergence.
         is_converged = dist <= std::max(this->options.getAbsTolerance(), 
-            this-options.getRelTolerance() * centroid.norm());
+            this->options.getRelTolerance() * centroid.norm());
         if (is_converged) {
           break;
         }
@@ -166,25 +184,25 @@ public:
   
   class Options : public DirectSearchMethod<Type, Size>::Options {
   public:
-    Options() : DirectSearchMethod<Type, Size>::Options(), 
-                init_extent_(1.0) {}
-    inline Type getInitExtent() const {
-      return init_extent_;
+    Options() : DirectSearchMethod<Type, Size>::Options(), init_length_(1.0) {}
+    inline Type getInitLength() const {
+      return init_length_;
     }
-    inline void setInitExtent(Type init_extent) {
-      CHECK_GT(init_extent, 0.0) << "Initial extent must be positive.";
-      init_extent_ = init_extent;
+    inline void setInitLength(Type init_length) {
+      CHECK_GT(init_length, 0.0) << "Initial length must be positive.";
+      init_length_ = init_length;
     }
   private:
-    Type init_extent_;
+    Type init_length_;
   } options;
   
 private:
   
-  static const Type alpha_ = 1.0;
-  static const Type gamma_ = 2.0;
-  static const Type rho_ = 0.5;
-  static const Type sigma_ = 0.5;
+  // Simplex coefficients.
+  static constexpr Type alpha_ = 1.0;
+  static constexpr Type gamma_ = 2.0;
+  static constexpr Type rho_ = 0.5;
+  static constexpr Type sigma_ = 0.5;
   
 }; // NelderMeadMethod
 
