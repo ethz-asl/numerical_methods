@@ -10,29 +10,25 @@
 
 namespace numerical_methods {
 
-template <typename Type, typename Size>
+template <typename Type, int Size>
 class DirectSearchMethod {
 public:
   
   typedef Type type;
-  typedef Size size;
   
-  template <bool Static = !std::is_same<Size, Eigen::Dynamic>::value>
+  template <bool Static = Size != Eigen::Dynamic>
   DirectSearchMethod(typename std::enable_if<Static>::type* = nullptr) : 
-      dimension_(Size) {
-    initialize();
-  }
-  template <bool Dynamic = std::is_same<Size, Eigen::Dynamic>::value>
+      dimension_(Size) {}
+  template <bool Dynamic = Size == Eigen::Dynamic>
   explicit DirectSearchMethod(int dimension, 
       typename std::enable_if<Dynamic>::type* = nullptr) : 
       dimension_(dimension) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
-    initialize();
   }
   virtual ~DirectSearchMethod() {}
   
   // Return dimension.
-  inline Size getDimension() const {
+  inline int getDimension() const {
     return dimension_;
   }
   
@@ -85,9 +81,6 @@ public:
   template <class Function>
   Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {}
-  
-protected:
-  virtual initialize() {};
   
 private:
   

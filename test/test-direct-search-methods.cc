@@ -10,9 +10,9 @@
 
 namespace numerical_methods {
 
-template <typename Type, typename Size>
+template <typename Type, int Size>
 struct Problem {
-template <bool Static = !std::is_same<Size, Eigen::Dynamic>::value>
+template <bool Static = Size != Eigen::Dynamic>
 Problem(
     const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& function, 
     const Eigen::Matrix<Type, Size, 1>& point, 
@@ -22,7 +22,7 @@ Problem(
                                                         point(point), 
                                                         minimum(minimum), 
                                                         tolerance(tolerance) {}
-template <bool Dynamic = std::is_same<Size, Eigen::Dynamic>::value>
+template <bool Dynamic = Size == Eigen::Dynamic>
 Problem(int dimension, 
     const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& function, 
     const Eigen::Matrix<Type, Size, 1>& point, 
@@ -35,7 +35,6 @@ Problem(int dimension,
   CHECK_GT(dimension, 0) << "Dimension must be positive.";
 }
 typedef Type type;
-typedef Size size;
 const int dimension;
 const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> function;
 const Eigen::Matrix<Type, Size, 1> point;
@@ -48,7 +47,7 @@ const Type tolerance;
 // J. J. More, B. S. Garbow and K. E. Hillstrom, "Testing Unconstrained 
 // Optimization Software," in ACM Transactions on Mathematical Software, 
 // vol. 7, no. 1, pp. 136-140 (1981).
-template <typename Type, typename Size>
+template <typename Type, int Size>
 std::vector<Problem<Type, Size>> defProblems() {
   std::vector<Problem<Type, Size>> problems;
   {
@@ -78,12 +77,11 @@ template <class Method>
 class DirectSearchMethodTest : public testing::Test {
 public:
   typedef typename Method::type type;
-  typedef typename Method::size size;
 protected:
   virtual void SetUp() {
-    problems = defProblems<typename Method::type, typename Method::size>();
+    problems = defProblems<typename Method::type, Method::size>();
   }
-  std::vector<Problem<typename Method::type, typename Method::size>> problems;
+  std::vector<Problem<typename Method::type, Method::size>> problems;
   const typename Method::type min_iterations = 1;
   const typename Method::type max_iterations = 100;
   const typename Method::type abs_tolerance = 1.0e-6;
@@ -98,9 +96,9 @@ TYPED_TEST_CASE(DirectSearchMethodTest, Types);
 TYPED_TEST(DirectSearchMethodTest, FindsMinimum) {
   for (typename TypeParam::type error : this->errors) {
     TypeParam method(error);
-    for (const Problem<typename TypeParam::type, typename TypeParam::size>& 
+    for (const Problem<typename TypeParam::type, TypeParam::size>& 
          problem : this->problems) {
-      const Eigen::Matrix<typename TypeParam::type, typename TypeParam::size, 1> 
+      const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
           minimum = method.minimize(problem.function, problem.point);
       EXPECT_LT((minimum - problem.minimum).norm(), problem.tolerance);
     }

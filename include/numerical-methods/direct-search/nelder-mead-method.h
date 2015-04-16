@@ -35,23 +35,34 @@ namespace numerical_methods {
 // I. D. Hill, "Remark AS R28: A Remark on Algorithm AS 47: Function 
 // Minimization using a Simplex Procedure," in Journal of the Royal Statistical 
 // Society, Series C (Applied Statistics), vol. 27, no. 3, pp. 380-382 (1978).
-template <typename Type, typename Size>
-class NelderMeadMethod : public DirectSearchMethod {
+template <typename Type, int Size>
+class NelderMeadMethod : public DirectSearchMethod<Type, Size> {
 public:
   
   template <class Function>
   Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
     
+    typename std::conditional<Size != Eigen::Dynamic, 
+        Eigen::Matrix<Type, Size, Size + 1>, 
+        Eigen::Matrix<Type, Size, Size>>::type points;
+    
+    typename std::conditional<Size != Eigen::Dynamic, 
+        Eigen::Matrix<Type, Size + 1, 1>, 
+        Eigen::Matrix<Type, Size, 1>>::type values;
+    
     const int dimension = this->getDimension();
+    
+    points.resize(dimension, dimension + 1);
+    values.resize(dimension + 1);
     
     // Initialize simplex.
     const Type extent = this->options.getInitExtent();
-    points_.fill(point - extent / static_cast<Type>(dimension + 1));
-    values_(0) = function(points_.col(0));
+    points.fill(point - extent / static_cast<Type>(dimension + 1));
+    values(0) = function(points.col(0));
     for (std::size_t n = 1; n <= dimension; ++n) {
-        points_(n, n) += extent;
-        values_(n) = function(points_.col(n));
+        points(n, n) += extent;
+        values(n) = function(points.col(n));
     }
     
     std::vector<std::size_t> ind(dimension + 1);
@@ -67,14 +78,14 @@ public:
       
       // Sort points in simplex according to value.
       std::sort(ind.begin(), ind.end(), 
-          [&values_](std::size_t i, std::size_t j) {
-            return values_(i) < values_(j);
+          [&values](std::size_t i, std::size_t j) {
+            return values(i) < values(j);
           });
       
       // Compute centroid.
       centroid.setZero();
       for (std::size_t n = 0; n <= dimension; ++n) {
-        centroid += points_.col(n);
+        centroid += points.col(n);
       }
       centroid /= static_cast<Type>(dimension);
       
@@ -83,7 +94,7 @@ public:
         // Compute maximum distance to centroid.
         Type dist = 0.0;
         for (std::size_t n = 0; n <= dimension; ++n) {
-          dist = std::max(dist, (centroid - points_.col(n)).norm());
+          dist = std::max(dist, (centroid - points.col(n)).norm());
         }
         
         // Check convergence.
@@ -102,42 +113,42 @@ public:
       
       // Reflect worst point.
       const Eigen::Matrix<Type, Size, 1> 
-          reflection_point = centroid + alpha_ * (centroid - points_.col(k));
+          reflection_point = centroid + alpha_ * (centroid - points.col(k));
       const Type reflection_value = function(reflection_point);
-      if ((reflection_value < values_(j)) && (reflection_value > values_(i))) {
-        points_.col(k) = reflection_point;
-        values_(k) = reflection_value;
-      } else if (reflection_value < values_(i)) {
+      if ((reflection_value < values(j)) && (reflection_value > values(i))) {
+        points.col(k) = reflection_point;
+        values(k) = reflection_value;
+      } else if (reflection_value < values(i)) {
         
         // Expand worst point.
         const Eigen::Matrix<Type, Size, 1> 
-            expansion_point = centroid + gamma_ * (centroid - points_.col(k));
+            expansion_point = centroid + gamma_ * (centroid - points.col(k));
         const Type expansion_value = function(expansion_point);
         if (expansion_value < reflection_value) {
-          points_.col(k) = expansion_point;
-          values_(k) = expansion_value;
+          points.col(k) = expansion_point;
+          values(k) = expansion_value;
         } else {
-          points_.col(k) = reflection_point;
-          values_(k) = reflection_value;
+          points.col(k) = reflection_point;
+          values(k) = reflection_value;
         }
         
       } else {
         
         // Contract worst point.
         const Eigen::Matrix<Type, Size, 1> 
-            contraction_point = centroid - rho_ * (centroid - points_.col(k));
+            contraction_point = centroid - rho_ * (centroid - points.col(k));
         const Type contraction_value = function(contraction_point);
-        if (contraction_value < values_(k)) {
-          points_.col(k) = contraction_point;
-          values_(k) = contraction_value;
+        if (contraction_value < values(k)) {
+          points.col(k) = contraction_point;
+          values(k) = contraction_value;
         } else {
           
           // Redistribute around best point.
           for (std::size_t n = 0; n <= dimension; ++n) {
             if (n != i) {
-              points_.col(n) = points_.col(i) 
-                  + sigma_ * (points_.col(n) - points_.col(i));
-              values_(n) = function(points_.col(n));
+              points.col(n) = points.col(i) 
+                  + sigma_ * (points.col(n) - points.col(i));
+              values(n) = function(points.col(n));
             }
           }
           
@@ -147,18 +158,15 @@ public:
       
     }
     
-    LOG_IF(WARNING, !is_converged, 
-        "Maximum number of iterations reached. Results may be inaccurate.")
+    LOG_IF(WARNING, !is_converged) 
+        << "Maximum number of iterations reached. Results may be inaccurate.";
     return centroid;
     
   }
   
   class Options : public DirectSearchMethod<Type, Size>::Options {
   public:
-    Options() : min_iterations_(1), 
-                max_iterations_(100), 
-                abs_tolerance_(1.0e-6), 
-                rel_tolerance_(1.0e-3), 
+    Options() : DirectSearchMethod<Type, Size>::Options(), 
                 init_extent_(1.0) {}
     inline Type getInitExtent() const {
       return init_extent_;
@@ -171,28 +179,12 @@ public:
     Type init_extent_;
   } options;
   
-protected:
-  virtual initialize() {
-    points_.resize(dimension_, dimension_ + 1);
-    values_.resize(dimension_ + 1);
-  }
-  
 private:
   
   static const Type alpha_ = 1.0;
   static const Type gamma_ = 2.0;
   static const Type rho_ = 0.5;
   static const Type sigma_ = 0.5;
-  
-  static constexpr bool dynamic = std::is_same<Size, Eigen::Dynamic>::value;
-  
-  std::conditional<dynamic, 
-      Eigen::Matrix<Type, Size, Size>, 
-      Eigen::Matrix<Type, Size, Size + 1>>::type points_;
-  
-  std::conditional<dynamic, 
-      Eigen::Matrix<Type, Size, 1>, 
-      Eigen::Matrix<Type, Size + 1, 1>>::type values_;
   
 }; // NelderMeadMethod
 
