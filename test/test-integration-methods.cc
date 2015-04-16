@@ -34,9 +34,9 @@ const Type tolerance;
 //      finite interval.
 // Based on Bailey et al. (2005).
 // 
-// David H. Bailey, Karthik Jeyabalan and Xiaoye S. Li, "A Comparison of Three 
-// High-precision Quadrature Schemes," in Experimental Mathematics, vol. 14, 
-// no. 4, pp. 317-329, 2005.
+// D. H. Bailey, K. Jeyabalan and X. S. Li, "A Comparison of Three High-
+// precision Quadrature Schemes," in Experimental Mathematics, vol. 14, no. 4, 
+// pp. 317-329 (2005).
 template <typename Type>
 std::vector<Problem<Type>> defProblems() {
   std::vector<Problem<Type>> problems;

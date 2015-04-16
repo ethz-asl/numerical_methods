@@ -83,7 +83,7 @@ public:
   
   // Find minimum of function.
   template <class Function>
-  Eigen::Matrix<Type, Size, 1> findMinimum(const Function& function, 
+  Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {}
   
 protected:

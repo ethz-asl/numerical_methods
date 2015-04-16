@@ -17,29 +17,30 @@ namespace numerical_methods {
 // with subsequent comments by Chambers and Ertel (1974), Benyon (1976) and 
 // Hill (1978).
 // 
-// J. A. Nelder and R. Mead, "A Simplex Method for Function Minimization," The 
-// Computer Journal, vol. 7, pp. 308–313 (1965).
+// J. A. Nelder and R. Mead, "A Simplex Method for Function Minimization," in 
+// The Computer Journal, vol. 7, pp. 308–313 (1965).
 // 
 // R. O'Neill, "Statistical Algorithms - Algorithm AS 47: Function Minimization 
-// using a Simplex Procedure," Applied Statistics, vol. 20, no. 3, pp. 338-345 
-// (1971).
+// using a Simplex Procedure," in Applied Statistics, vol. 20, no. 3, 
+// pp. 338-345 (1971).
 // 
 // J. M. Chambers and J. E. Ertel, "Statistical Algorithms - Remark AS R11: A 
 // Remark on Algorithm AS 47: Function Minimization using a Simplex Procedure," 
-// Applied Statistics, vol. 23, no. 2, pp. 250-251 (1974).
+// in Applied Statistics, vol. 23, no. 2, pp. 250-251 (1974).
 // 
 // P. R. Benyon, "Statistical Algorithms - Remark AS R15: Function Minimization 
-// using a Simplex Procedure," Applied Statistics, vol. 25, no. 1, p. 97 (1976).
+// using a Simplex Procedure," in Applied Statistics, vol. 25, no. 1, p. 97 
+// (1976).
 // 
 // I. D. Hill, "Remark AS R28: A Remark on Algorithm AS 47: Function 
-// Minimization using a Simplex Procedure," Journal of the Royal Statistical 
+// Minimization using a Simplex Procedure," in Journal of the Royal Statistical 
 // Society, Series C (Applied Statistics), vol. 27, no. 3, pp. 380-382 (1978).
 template <typename Type, typename Size>
 class NelderMeadMethod : public DirectSearchMethod {
 public:
   
   template <class Function>
-  Eigen::Matrix<Type, Size, 1> findMinimum(const Function& function, 
+  Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
     
     const int dimension = this->getDimension();
