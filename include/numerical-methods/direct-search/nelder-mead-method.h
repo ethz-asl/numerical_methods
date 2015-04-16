@@ -8,19 +8,10 @@
 #include <glog/logging.h>
 
 #include "numerical-methods/common-definitions.h"
+#include "numerical-methods/eigen-utility-functions.h"
 #include "numerical-methods/direct-search/direct-search-method.h"
 
 namespace numerical_methods {
-
-template <typename Type, int Size>
-Eigen::Matrix<Type, Size, 1> operator-(const Eigen::Matrix<Type, Size, 1>& x, 
-    Type a) {
-  Eigen::Matrix<Type, Size, 1> y(x);
-  for (std::size_t i = 0; i < y.size(); ++i) {
-    y(i) -= a;
-  }
-  return y;
-}
 
 // This class implements multi-dimensional minimization by the downhill simplex 
 // search method of Nelder and Mead (1965), as implemented by O'Neill (1971), 
@@ -205,6 +196,15 @@ private:
   static constexpr Type sigma_ = 0.5;
   
 }; // NelderMeadMethod
+
+template <typename Type, int Size> 
+constexpr Type NelderMeadMethod<Type, Size>::alpha_;
+template <typename Type, int Size> 
+constexpr Type NelderMeadMethod<Type, Size>::gamma_;
+template <typename Type, int Size> 
+constexpr Type NelderMeadMethod<Type, Size>::rho_;
+template <typename Type, int Size> 
+constexpr Type NelderMeadMethod<Type, Size>::sigma_;
 
 } // namespace numerical_methods
 
