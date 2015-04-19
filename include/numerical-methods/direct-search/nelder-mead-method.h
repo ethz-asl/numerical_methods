@@ -69,9 +69,9 @@ public:
     const Type length = this->options.getInitLength();
     values(0) = function(points.col(0));
     for (std::size_t n = 1; n <= dimension; ++n) {
-        points.col(n) = point - length / static_cast<Type>(dimension + 1);
-        points(n, n) += length;
-        values(n) = function(points.col(n));
+      points.col(n) = point - length / static_cast<Type>(dimension + 1);
+      points(n - 1, n) += length;
+      values(n) = function(points.col(n));
     }
     
     std::vector<std::size_t> ind(dimension + 1);

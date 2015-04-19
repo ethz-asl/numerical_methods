@@ -13,6 +13,7 @@ namespace numerical_methods {
 template <typename Type, int Size>
 Eigen::Matrix<Type, Size, 1> vectorize(const std::vector<Type>& x) {
   Eigen::Matrix<Type, Size, 1> y;
+  y.resize(x.size());
   for (std::size_t i = 0; i < x.size(); ++i) {
     y(i) = x[i];
   }
@@ -65,6 +66,7 @@ std::vector<Problem<Type, Size>> defProblems() {
     const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
         function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Eigen::Matrix<Type, Size, 1> y;
+      y.resize(2);
       y(0) = 10.0 * (x(1) - std::pow(x(0), 2));
       y(1) = 1.0 - x(0);
       return y.squaredNorm();
