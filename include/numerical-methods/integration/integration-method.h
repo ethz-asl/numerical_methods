@@ -28,11 +28,6 @@ public:
   }
   
 private:
-  
-  // Disallow dangerous copy and assignment constructors.
-  IntegrationMethod(const IntegrationMethod&) = delete;
-  IntegrationMethod& operator=(const IntegrationMethod&) = delete;
-  
   const Type error_;
   
 }; // IntegrationMethod

@@ -84,11 +84,6 @@ public:
       const Eigen::Matrix<Type, Size, 1>& point) const {}
   
 private:
-  
-  // Disallow dangerous copy and assignment constructors.
-  DirectSearchMethod(const DirectSearchMethod&) = delete;
-  DirectSearchMethod& operator=(const DirectSearchMethod&) = delete;
-  
   const int dimension_;
   
 }; // DirectSearchMethod
