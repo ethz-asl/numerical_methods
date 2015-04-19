@@ -67,6 +67,7 @@ public:
     
     // Initialize simplex.
     const Type length = this->options.getInitLength();
+    points.col(0) = point;
     values(0) = function(points.col(0));
     for (std::size_t n = 1; n <= dimension; ++n) {
       points.col(n) = point - length / static_cast<Type>(dimension + 1);
