@@ -62,16 +62,18 @@ public:
     
     const int dimension = this->getDimension();
     
-    points.resize(dimension, dimension + 1);
-    values.resize(dimension + 1);
+    if (Size == Eigen::Dynamic) {
+      points.resize(dimension, dimension + 1);
+      values.resize(dimension + 1);
+    }
     
     // Initialize simplex.
-    const Type length = this->options.getInitLength();
+    const Type scale = this->options.getInitScale();
     points.col(0) = point;
     values(0) = function(points.col(0));
     for (std::size_t n = 1; n <= dimension; ++n) {
-      points.col(n) = point - length / static_cast<Type>(dimension + 1);
-      points(n - 1, n) += length;
+      points.col(n) = point - scale / static_cast<Type>(dimension + 1);
+      points(n - 1, n) += scale;
       values(n) = function(points.col(n));
     }
     
@@ -81,7 +83,9 @@ public:
     }
     
     Eigen::Matrix<Type, Size, 1> centroid;
-    centroid.resize(dimension);
+    if (Size == Eigen::Dynamic) {
+      centroid.resize(dimension);
+    }
     
     bool is_converged = false;
     for (int iter = 0; iter < this->options.getMaxIterations(); ++iter) {
@@ -146,7 +150,7 @@ public:
         
         // Contract worst point.
         const Eigen::Matrix<Type, Size, 1> 
-            contraction_point = centroid - rho_ * (centroid - points.col(k));
+            contraction_point = centroid + rho_ * (centroid - points.col(k));
         const Type contraction_value = function(contraction_point);
         if (contraction_value < values(k)) {
           points.col(k) = contraction_point;
@@ -176,16 +180,16 @@ public:
   
   class Options : public DirectSearchMethod<Type, Size>::Options {
   public:
-    Options() : DirectSearchMethod<Type, Size>::Options(), init_length_(1.0) {}
-    inline Type getInitLength() const {
-      return init_length_;
+    Options() : DirectSearchMethod<Type, Size>::Options(), init_scale_(1.0) {}
+    inline Type getInitScale() const {
+      return init_scale_;
     }
-    inline void setInitLength(Type init_length) {
-      CHECK_GT(init_length, 0.0) << "Initial length must be positive.";
-      init_length_ = init_length;
+    inline void setInitScale(Type init_scale) {
+      CHECK_GT(init_scale, 0.0) << "Initial scale must be positive.";
+      init_scale_ = init_scale;
     }
   private:
-    Type init_length_;
+    Type init_scale_;
   } options;
   
 private:
@@ -193,7 +197,7 @@ private:
   // Simplex coefficients.
   static constexpr Type alpha_ = 1.0;
   static constexpr Type gamma_ = 2.0;
-  static constexpr Type rho_ = 0.5;
+  static constexpr Type rho_ = - 0.5;
   static constexpr Type sigma_ = 0.5;
   
 }; // NelderMeadMethod
