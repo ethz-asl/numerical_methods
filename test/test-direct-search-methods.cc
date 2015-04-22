@@ -1,5 +1,6 @@
 #include <cmath>
 #include <functional>
+#include <initializer_list>
 
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
@@ -11,15 +12,17 @@
 namespace numerical_methods {
 
 template <typename Type, int Size>
-Eigen::Matrix<Type, Size, 1> vectorize(const std::vector<Type>& x) {
-  Eigen::Matrix<Type, Size, 1> y;
+Eigen::Matrix<Type, Size, 1> 
+    vectorize(const std::initializer_list<Type>& list) {
+  Eigen::Matrix<Type, Size, 1> vector;
   if (Size == Eigen::Dynamic) {
-    y.resize(x.size());
+    vector.resize(list.size());
   }
-  for (std::size_t i = 0; i < x.size(); ++i) {
-    y(i) = x[i];
+  std::size_t i = 0;
+  for (const Type& element : list) {
+    vector(i++) = element;
   }
-  return y;
+  return vector;
 }
 
 template <typename Type, int Size>
@@ -76,12 +79,12 @@ std::vector<Problem<Type, Size>> defProblems() {
       return y.squaredNorm();
     };
     const int dimension = 2;
-    const std::vector<Type> point = {0.0, 0.0};
-    const std::vector<Type> minimum = {- 1.2, 1.0};
+    const Eigen::Matrix<Type, Size, 1> 
+        point = vectorize<Type, Size>({0.0, 0.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        minimum = vectorize<Type, Size>({- 1.2, 1.0});
     const Type tolerance = 1.0e-3;
-    Problem<Type, Size> problem(dimension, function, 
-        vectorize<Type, Size>(point), vectorize<Type, Size>(minimum), 
-        tolerance);
+    Problem<Type, Size> problem(dimension, function, point, minimum, tolerance);
     problems.push_back(problem);
     
   }

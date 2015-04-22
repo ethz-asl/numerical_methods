@@ -70,7 +70,7 @@ public:
     // Initialize simplex.
     const Type scale = this->options.getInitScale();
     points.col(0) = point;
-    values(0) = function(points.col(0));
+    values(0) = function(point);
     for (std::size_t n = 1; n <= dimension; ++n) {
       points.col(n) = point - scale / static_cast<Type>(dimension + 1);
       points(n - 1, n) += scale;

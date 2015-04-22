@@ -7,6 +7,16 @@
 namespace numerical_methods {
 
 template <typename Type, int Size>
+Eigen::Matrix<Type, Size, 1> operator+(const Eigen::Matrix<Type, Size, 1>& x, 
+    Type a) {
+  Eigen::Matrix<Type, Size, 1> y(x);
+  for (std::size_t i = 0; i < y.size(); ++i) {
+    y(i) += a;
+  }
+  return y;
+}
+
+template <typename Type, int Size>
 Eigen::Matrix<Type, Size, 1> operator-(const Eigen::Matrix<Type, Size, 1>& x, 
     Type a) {
   Eigen::Matrix<Type, Size, 1> y(x);
