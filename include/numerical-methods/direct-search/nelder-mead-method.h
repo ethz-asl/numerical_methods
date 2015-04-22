@@ -134,7 +134,7 @@ public:
         values(k) = reflection_value;
       } else if (reflection_value < values(i)) {
         
-        // Expand worst point.
+        // Expand point.
         const Eigen::Matrix<Type, Size, 1> 
             expansion_point = centroid + gamma_ * (centroid - points.col(k));
         const Type expansion_value = function(expansion_point);

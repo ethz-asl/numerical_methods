@@ -76,9 +76,9 @@ std::vector<Problem<Type, Size>> defProblems() {
     };
     const int dimension = 2;
     const Eigen::Matrix<Type, Size, 1> 
-        initial_guess = vectorize<Type, Size>({0.0, 0.0});
+        initial_guess = vectorize<Type, Size>({- 1.2, 1.0});
     const Eigen::Matrix<Type, Size, 1> 
-        minimum = vectorize<Type, Size>({- 1.2, 1.0});
+        minimum = vectorize<Type, Size>({1.0, 1.0});
     const Type tolerance = 1.0e-3;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
