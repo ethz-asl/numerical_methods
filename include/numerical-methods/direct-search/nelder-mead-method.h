@@ -96,12 +96,19 @@ public:
             return values(i) < values(j);
           });
       
+      // Store indices to best, second-worst and worst points.
+      const std::size_t i = ind[0];
+      const std::size_t j = ind[dimension - 1];
+      const std::size_t k = ind[dimension];
+      
       // Compute centroid.
       centroid.setZero();
       for (std::size_t n = 0; n <= dimension; ++n) {
-        centroid += points.col(n);
+        if (n != k) {
+          centroid += points.col(n);
+        }
       }
-      centroid /= static_cast<Type>(dimension + 1);
+      centroid /= static_cast<Type>(dimension);
       
       if (iter > this->options.getMinIterations()) {
         
@@ -120,16 +127,11 @@ public:
         
       }
       
-      // Store indices to best, second-worst and worst points.
-      const std::size_t i = ind[0];
-      const std::size_t j = ind[dimension - 1];
-      const std::size_t k = ind[dimension];
-      
-      // Reflect worst point.
+      // Reflect point.
       const Eigen::Matrix<Type, Size, 1> 
           reflection_point = centroid + alpha_ * (centroid - points.col(k));
       const Type reflection_value = function(reflection_point);
-      if ((reflection_value < values(j)) && (reflection_value > values(i))) {
+      if ((reflection_value < values(j)) && (reflection_value >= values(i))) {
         points.col(k) = reflection_point;
         values(k) = reflection_value;
       } else if (reflection_value < values(i)) {
@@ -148,7 +150,7 @@ public:
         
       } else {
         
-        // Contract worst point.
+        // Contract point.
         const Eigen::Matrix<Type, Size, 1> 
             contraction_point = centroid + rho_ * (centroid - points.col(k));
         const Type contraction_value = function(contraction_point);
@@ -157,7 +159,7 @@ public:
           values(k) = contraction_value;
         } else {
           
-          // Redistribute around best point.
+          // Reduce points.
           for (std::size_t n = 0; n <= dimension; ++n) {
             if (n != i) {
               points.col(n) = points.col(i) 
