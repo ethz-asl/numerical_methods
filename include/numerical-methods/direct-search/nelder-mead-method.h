@@ -101,7 +101,7 @@ public:
       for (std::size_t n = 0; n <= dimension; ++n) {
         centroid += points.col(n);
       }
-      centroid /= static_cast<Type>(dimension);
+      centroid /= static_cast<Type>(dimension + 1);
       
       if (iter > this->options.getMinIterations()) {
         
