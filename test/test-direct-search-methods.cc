@@ -27,19 +27,16 @@ Eigen::Matrix<Type, Size, 1>
 
 template <typename Type, int Size>
 struct Problem {
+using vector = Eigen::Matrix<Type, Size, 1>;
 template <bool Static = Size != Eigen::Dynamic>
-Problem(
-    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& function, 
-    const Eigen::Matrix<Type, Size, 1>& initial_guess, 
-    const Eigen::Matrix<Type, Size, 1>& minimum, Type tolerance, 
+Problem(const std::function<Type(const vector&)>& function, 
+    const vector& initial_guess, const vector& minimum, Type tolerance, 
     typename std::enable_if<Static>::type* = nullptr) : dimension(Size), 
     function(function), initial_guess(initial_guess), minimum(minimum), 
     tolerance(tolerance) {}
 template <bool Dynamic = Size == Eigen::Dynamic>
-Problem(int dimension, 
-    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& function, 
-    const Eigen::Matrix<Type, Size, 1>& initial_guess, 
-    const Eigen::Matrix<Type, Size, 1>& minimum, Type tolerance, 
+Problem(int dimension, const std::function<Type(const vector&)>& function, 
+    const vector& initial_guess, const vector& minimum, Type tolerance, 
     typename std::enable_if<Dynamic>::type* = nullptr) : dimension(dimension), 
     function(function), initial_guess(initial_guess), minimum(minimum), 
     tolerance(tolerance) {
@@ -47,9 +44,9 @@ Problem(int dimension,
 }
 typedef Type type;
 const int dimension;
-const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> function;
-const Eigen::Matrix<Type, Size, 1> initial_guess;
-const Eigen::Matrix<Type, Size, 1> minimum;
+const std::function<Type(const vector&)> function;
+const vector initial_guess;
+const vector minimum;
 const Type tolerance;
 };
 
@@ -60,13 +57,14 @@ const Type tolerance;
 // vol. 7, no. 1, pp. 136-140 (1981).
 template <typename Type, int Size>
 std::vector<Problem<Type, Size>> defProblems() {
+  using vector = Eigen::Matrix<Type, Size, 1>;
   std::vector<Problem<Type, Size>> problems;
   {
     
     // Rosenbrock function in More et al. (1981).
-    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
-        function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
-      Eigen::Matrix<Type, Size, 1> y;
+    const std::function<Type(const vector&)> 
+        function = [](const vector& x) -> Type {
+      vector y;
       if (Size == Eigen::Dynamic) {
         y.resize(2);
       }
@@ -75,16 +73,36 @@ std::vector<Problem<Type, Size>> defProblems() {
       return y.squaredNorm();
     };
     const int dimension = 2;
-    const Eigen::Matrix<Type, Size, 1> 
-        initial_guess = vectorize<Type, Size>({0.0, 1.0});
-    const Eigen::Matrix<Type, Size, 1> 
-        minimum = vectorize<Type, Size>({1.0, 1.0});
+    const vector initial_guess = vectorize<Type, Size>({0.0, 1.0});
+    const vector minimum = vectorize<Type, Size>({1.0, 1.0});
     const Type tolerance = 1.0e-3;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
     problems.push_back(problem);
     
-  }
+  }/*
+  {
+    
+    // Freudenstein and Roth function in More et al. (1981).
+    const std::function<Type(const vector&)>
+        function = [](const vector& x) -> Type {
+      vector y;
+      if (Size == Eigen::Dynamic) {
+        y.resize(2);
+      }
+      y(0) = - 13.0 + x(0) + ((5.0 - x(1)) * x(1) - 2.0) * x(1);
+      y(1) = - 29.0 + x(0) + ((1.0 + x(1)) * x(1) - 14.0) * x(1);
+      return y.squaredNorm();
+    };
+    const int dimension = 2;
+    const vector initial_guess = vectorize<Type, Size>({0.5, - 2.0});
+    const vector minimum = vectorize<Type, Size>({5.0, 4.0});
+    const Type tolerance = 1.0e-3;
+    Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
+        tolerance);
+    problems.push_back(problem);
+    
+  }*/
   return problems;
 }
 
