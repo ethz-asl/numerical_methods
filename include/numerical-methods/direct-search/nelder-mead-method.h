@@ -94,6 +94,24 @@ public:
       const std::size_t j = ind[dimension - 1];
       const std::size_t k = ind[dimension];
       
+      if (iter > this->options.getMinIterations()) {
+        
+        Type dist = 0.0;
+        for (std::size_t n = 0; n <= dimension; ++n) {
+          if (n != k) {
+            dist = std::max(dist, (points.col(n) - points.col(k)).norm());
+          }
+        }
+        
+        // Check convergence.
+        is_converged = dist <= std::max(this->options.getAbsTolerance(), 
+            this->options.getRelTolerance() * points.col(k).norm());
+        if (is_converged) {
+          break;
+        }
+        
+      }
+      
       // Compute centroid.
       centroid.setZero();
       for (std::size_t n = 0; n <= dimension; ++n) {
@@ -103,26 +121,9 @@ public:
       }
       centroid /= static_cast<Type>(dimension);
       
-      if (iter > this->options.getMinIterations()) {
-        
-        // Compute maximum distance to centroid.
-        Type dist = 0.0;
-        for (std::size_t n = 0; n <= dimension; ++n) {
-          dist = std::max(dist, (centroid - points.col(n)).norm());
-        }
-        
-        // Check convergence.
-        is_converged = dist <= std::max(this->options.getAbsTolerance(), 
-            this->options.getRelTolerance() * centroid.norm());
-        if (is_converged) {
-          break;
-        }
-        
-      }
-      
       // Reflect point.
-      const Eigen::Matrix<Type, Size, 1> 
-          reflection_point = centroid + alpha_ * (centroid - points.col(k));
+      const Eigen::Matrix<Type, Size, 1> reflection_point = centroid 
+          + reflection_coeff_ * (centroid - points.col(k));
       const Type reflection_value = function(reflection_point);
       if ((reflection_value < values(j)) && (reflection_value >= values(i))) {
         points.col(k) = reflection_point;
@@ -130,8 +131,8 @@ public:
       } else if (reflection_value < values(i)) {
         
         // Expand point.
-        const Eigen::Matrix<Type, Size, 1> 
-            expansion_point = centroid + gamma_ * (centroid - points.col(k));
+        const Eigen::Matrix<Type, Size, 1> expansion_point = centroid 
+            + expansion_coeff_ * (centroid - points.col(k));
         const Type expansion_value = function(expansion_point);
         if (expansion_value < reflection_value) {
           points.col(k) = expansion_point;
@@ -144,8 +145,8 @@ public:
       } else {
         
         // Contract point.
-        const Eigen::Matrix<Type, Size, 1> 
-            contraction_point = centroid + rho_ * (centroid - points.col(k));
+        const Eigen::Matrix<Type, Size, 1> contraction_point = centroid 
+            + contraction_coeff_ * (centroid - points.col(k));
         const Type contraction_value = function(contraction_point);
         if (contraction_value < values(k)) {
           points.col(k) = contraction_point;
@@ -156,7 +157,7 @@ public:
           for (std::size_t n = 0; n <= dimension; ++n) {
             if (n != i) {
               points.col(n) = points.col(i) 
-                  + sigma_ * (points.col(n) - points.col(i));
+                  + reduction_coeff_ * (points.col(n) - points.col(i));
               values(n) = function(points.col(n));
             }
           }
@@ -190,21 +191,21 @@ public:
 private:
   
   // Simplex coefficients.
-  static constexpr Type alpha_ = 1.0;
-  static constexpr Type gamma_ = 2.0;
-  static constexpr Type rho_ = - 0.5;
-  static constexpr Type sigma_ = 0.5;
+  static constexpr Type reflection_coeff_ = 1.0;
+  static constexpr Type expansion_coeff_ = 2.0;
+  static constexpr Type contraction_coeff_ = - 0.5;
+  static constexpr Type reduction_coeff_ = 0.5;
   
 }; // NelderMeadMethod
 
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::alpha_;
+constexpr Type NelderMeadMethod<Type, Size>::reflection_coeff_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::gamma_;
+constexpr Type NelderMeadMethod<Type, Size>::expansion_coeff_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::rho_;
+constexpr Type NelderMeadMethod<Type, Size>::contraction_coeff_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::sigma_;
+constexpr Type NelderMeadMethod<Type, Size>::reduction_coeff_;
 
 } // namespace numerical_methods
 

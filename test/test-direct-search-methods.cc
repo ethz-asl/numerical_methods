@@ -109,8 +109,8 @@ protected:
   std::vector<Problem<typename Method::type, Method::size>> problems;
   const typename Method::type min_iterations = 10;
   const typename Method::type max_iterations = 1000;
-  const typename Method::type abs_tolerance = 1.0e-16;
-  const typename Method::type rel_tolerance = 1.0e-16;
+  const typename Method::type abs_tolerance = 1.0e-12;
+  const typename Method::type rel_tolerance = 1.0e-12;
   const typename Method::type init_scale = 1.0;
 };
 
