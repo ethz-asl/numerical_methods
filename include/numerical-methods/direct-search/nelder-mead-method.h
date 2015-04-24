@@ -2,7 +2,9 @@
 #define NUMERICAL_METHODS_DIRECT_SEARCH_NELDER_MEAD_METHOD_H_
 
 #include <cmath>
+#include <limits>
 #include <type_traits>
+#include <utility>
 
 #include <Eigen/Dense>
 #include <glog/logging.h>
@@ -64,18 +66,19 @@ public:
         Eigen::Matrix<Type, Size, 1>>::type values(dimension + 1);
     
     // Initialize simplex.
-    const Type scale = this->options.getInitScale();
+    const std::pair<Type, Type> scale = this->options.getInitScale();
     points.col(0) = point;
     values(0) = function(point);
-    for (std::size_t n = 1; n <= dimension; ++n) {
-      points.col(n) = point - scale / static_cast<Type>(dimension);
-      points(n - 1, n) += scale;
-      values(n) = function(points.col(n));
+    for (std::size_t k = 1; k <= dimension; ++k) {
+      points.col(k) = point;
+      points(k - 1, k) += (point(k - 1) != 0.0) ? 
+          (scale.first * point(k - 1)) : (scale.second);
+      values(k) = function(points.col(k));
     }
     
     std::vector<std::size_t> ind(dimension + 1);
-    for (std::size_t n = 0; n <= dimension; ++n) {
-      ind[n] = n;
+    for (std::size_t k = 0; k <= dimension; ++k) {
+      ind[k] = k;
     }
     
     Eigen::Matrix<Type, Size, 1> centroid(dimension);
@@ -89,21 +92,27 @@ public:
             return values(i) < values(j);
           });
       
-      // Store indices to best, second-worst and worst points.
+      // Store indices to best and worst points.
       const std::size_t i = ind[0];
-      const std::size_t j = ind[dimension - 1];
-      const std::size_t k = ind[dimension];
+      const std::size_t j = ind[dimension];
       
       if (iter > this->options.getMinIterations()) {
         
-        Type diff = 0.0;
-        for (std::size_t n = 1; n <= dimension; ++n) {
-          diff = std::max(diff, (points.col(ind[n]) - points.col(i)).norm());
+        Type point_difference = 0.0;
+        Type value_difference = 0.0;
+        for (std::size_t k = 1; k <= dimension; ++k) {
+          point_difference = std::max(point_difference, 
+              (points.col(ind[k]) - points.col(i)).norm());
+          value_difference = std::max(value_difference, 
+              std::abs(values(ind[k]) - values(i)));
         }
         
         // Check convergence.
-        is_converged = diff <= std::max(this->options.getAbsTolerance(), 
-          this->options.getRelTolerance() * points.col(i).norm());
+        is_converged = 
+            (point_difference <= std::max(this->options.getParamTolerance(), 
+             std::numeric_limits<Type>::epsilon() * points.col(i).norm()))
+            && (value_difference <= std::max(this->options.getFuncTolerance(), 
+                std::numeric_limits<Type>::epsilon() * std::abs(values(i))));
         if (is_converged) {
           break;
         }
@@ -112,54 +121,76 @@ public:
       
       // Compute centroid.
       centroid.setZero();
-      for (std::size_t n = 0; n <= dimension; ++n) {
-        if (n != k) {
-          centroid += points.col(n);
+      for (std::size_t k = 0; k <= dimension; ++k) {
+        if (k != j) {
+          centroid += points.col(k);
         }
       }
       centroid /= static_cast<Type>(dimension);
       
-      // Reflect point.
+      // Perform reflection.
       const Eigen::Matrix<Type, Size, 1> reflection_point = centroid 
-          + reflection_coefficient_ * (centroid - points.col(k));
+          + reflection_coefficient_ * (centroid - points.col(j));
       const Type reflection_value = function(reflection_point);
-      if ((reflection_value < values(j)) && (reflection_value >= values(i))) {
-        points.col(k) = reflection_point;
-        values(k) = reflection_value;
-      } else if (reflection_value < values(i)) {
+      if (reflection_value < values(i)) {
         
-        // Expand point.
+        // Perform expansion.
         const Eigen::Matrix<Type, Size, 1> expansion_point = centroid 
-            + expansion_coefficient_ * (centroid - points.col(k));
+            + expansion_coefficient_ * (centroid - points.col(j));
         const Type expansion_value = function(expansion_point);
         if (expansion_value < reflection_value) {
-          points.col(k) = expansion_point;
-          values(k) = expansion_value;
+          points.col(j) = expansion_point;
+          values(j) = expansion_value;
         } else {
-          points.col(k) = reflection_point;
-          values(k) = reflection_value;
+          points.col(j) = reflection_point;
+          values(j) = reflection_value;
         }
         
       } else {
-        
-        // Contract point.
-        const Eigen::Matrix<Type, Size, 1> contraction_point = centroid 
-            + contraction_coefficient_ * (centroid - points.col(k));
-        const Type contraction_value = function(contraction_point);
-        if (contraction_value < values(k)) {
-          points.col(k) = contraction_point;
-          values(k) = contraction_value;
+        if (reflection_value < values(ind[dimension - 1])) {
+          points.col(j) = reflection_point;
+          values(j) = reflection_value;
         } else {
-          
-          // Reduce points.
-          for (std::size_t n = 0; n <= dimension; ++n) {
-            if (n != i) {
-              points.col(n) = points.col(i) 
-                  + reduction_coefficient_ * (points.col(n) - points.col(i));
-              values(n) = function(points.col(n));
+          bool shrink = false;
+          if (reflection_value < values(j)) {
+            
+            // Perform outside contraction.
+            const Eigen::Matrix<Type, Size, 1> contraction_point = centroid 
+                + contraction_coefficient_ * (centroid - points.col(j));
+            const Type contraction_value = function(contraction_point);
+            if (contraction_value < reflection_value) {
+              points.col(j) = contraction_point;
+              values(j) = contraction_value;
+            } else {
+              shrink = true;
             }
+            
+          } else {
+            
+            // Perform inside contraction.
+            const Eigen::Matrix<Type, Size, 1> contraction_point = centroid 
+                - contraction_coefficient_ * (centroid - points.col(j));
+            const Type contraction_value = function(contraction_point);
+            if (contraction_value < values(j)) {
+              points.col(j) = contraction_point;
+              values(j) = contraction_value;
+            } else {
+              shrink = true;
+            }
+            
           }
-          
+          if (shrink) {
+            
+            // Perform shrinkage.
+            for (std::size_t k = 0; k <= dimension; ++k) {
+              if (k != i) {
+                points.col(k) = points.col(i) 
+                    + shrinkage_coefficient_ * (points.col(k) - points.col(i));
+                values(k) = function(points.col(k));
+              }
+            }
+            
+          }
         }
         
       }
@@ -174,16 +205,18 @@ public:
   
   class Options : public DirectSearchMethod<Type, Size>::Options {
   public:
-    Options() : DirectSearchMethod<Type, Size>::Options(), init_scale_(1.0) {}
-    inline Type getInitScale() const {
+    Options() : DirectSearchMethod<Type, Size>::Options(), 
+        init_scale_(std::make_pair(5.0e-2, 0.25e-3)) {}
+    inline const std::pair<Type, Type>& getInitScale() const {
       return init_scale_;
     }
-    inline void setInitScale(Type init_scale) {
-      CHECK_GT(init_scale, 0.0) << "Initial scale must be positive.";
+    inline void setInitScale(const std::pair<Type, Type>& init_scale) {
+      CHECK_GT(std::min(init_scale.first, init_scale.second), 0.0) 
+          << "Initial scale must be positive.";
       init_scale_ = init_scale;
     }
   private:
-    Type init_scale_;
+    std::pair<Type, Type> init_scale_;
   } options;
   
 private:
@@ -192,7 +225,7 @@ private:
   static constexpr Type reflection_coefficient_ = 1.0;
   static constexpr Type expansion_coefficient_= 2.0;
   static constexpr Type contraction_coefficient_ = - 0.5;
-  static constexpr Type reduction_coefficient_ = 0.5;
+  static constexpr Type shrinkage_coefficient_ = 0.5;
   
 }; // NelderMeadMethod
 
@@ -203,7 +236,7 @@ constexpr Type NelderMeadMethod<Type, Size>::expansion_coefficient_;
 template <typename Type, int Size> 
 constexpr Type NelderMeadMethod<Type, Size>::contraction_coefficient_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::reduction_coefficient_;
+constexpr Type NelderMeadMethod<Type, Size>::shrinkage_coefficient_;
 
 } // namespace numerical_methods
 

@@ -58,18 +58,33 @@ std::vector<Problem<Type, Size>> defProblems() {
   std::vector<Problem<Type, Size>> problems;
   {
     
-    // Rosenbrock function in More et al. (1981).
+    // Quadratic function.
     const std::function<Type(const vector&)> 
         function = [](const vector& x) -> Type {
-      vector y(2);
-      y(0) = 10.0 * (x(1) - std::pow(x(0), 2));
-      y(1) = 1.0 - x(0);
-      return y.squaredNorm();
+      return std::pow(x(0) + 2.0 * x(1) - 7.0, 2) 
+          + std::pow(2.0 * x(0) + x(1) - 5.0, 2);
     };
     const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({0.0, 1.0});
+    const vector initial_guess = vectorize<Type, Size>({0.0, 0.0});
+    const vector minimum = vectorize<Type, Size>({1.0, 3.0});
+    const Type tolerance = 1.0e-2;
+    Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
+        tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Rosenbrock's function in More et al. (1981).
+    const std::function<Type(const vector&)> 
+        function = [](const vector& x) -> Type {
+      return std::pow(1.0 - x(0), 2) 
+          + 100.0 * std::pow(std::pow(x(0), 2) - x(1), 2);
+    };
+    const int dimension = 2;
+    const vector initial_guess = vectorize<Type, Size>({- 1.0, - 1.0});
     const vector minimum = vectorize<Type, Size>({1.0, 1.0});
-    const Type tolerance = 1.0e-3;
+    const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
     problems.push_back(problem);
@@ -90,9 +105,8 @@ protected:
   std::vector<Problem<typename Method::type, Method::size>> problems;
   const typename Method::type min_iterations = 10;
   const typename Method::type max_iterations = 1000;
-  const typename Method::type abs_tolerance = 1.0e-16;
-  const typename Method::type rel_tolerance = 1.0e-12;
-  const typename Method::type init_scale = 1.0;
+  const typename Method::type param_tolerance = 1.0e-16;
+  const typename Method::type func_tolerance = 1.0e-12;
 };
 
 typedef testing::Types<NelderMeadMethod<double, Eigen::Dynamic>> Types;
@@ -106,9 +120,8 @@ TYPED_TEST(DirectSearchMethodTest, FindsMinimum) {
     TypeParam method(problem.dimension);
     method.options.setMinIterations(this->min_iterations);
     method.options.setMaxIterations(this->max_iterations);
-    method.options.setAbsTolerance(this->abs_tolerance);
-    method.options.setRelTolerance(this->rel_tolerance);
-    method.options.setInitScale(this->init_scale);
+    method.options.setParamTolerance(this->param_tolerance);
+    method.options.setFuncTolerance(this->func_tolerance);
     const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
         minimum = method.minimize(problem.function, problem.initial_guess);
     EXPECT_LT((minimum - problem.minimum).norm(), problem.tolerance);

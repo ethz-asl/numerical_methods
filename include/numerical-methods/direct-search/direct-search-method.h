@@ -37,19 +37,19 @@ public:
   public:
     Options() : min_iterations_(1), 
                 max_iterations_(100), 
-                abs_tolerance_(1.0e-6), 
-                rel_tolerance_(1.0e-3) {}
+                param_tolerance_(1.0e-6), 
+                func_tolerance_(1.0e-3) {}
     inline int getMinIterations() const {
       return min_iterations_;
     }
     inline int getMaxIterations() const {
       return max_iterations_;
     }
-    inline Type getAbsTolerance() const {
-      return abs_tolerance_;
+    inline Type getParamTolerance() const {
+      return param_tolerance_;
     }
-    inline Type getRelTolerance() const {
-      return rel_tolerance_;
+    inline Type getFuncTolerance() const {
+      return func_tolerance_;
     }
     inline void setMinIterations(int min_iterations) {
       CHECK_GT(min_iterations, 0) 
@@ -61,21 +61,21 @@ public:
           << "Maximum number of iterations must be positive.";
       max_iterations_ = max_iterations;
     }
-    inline void setAbsTolerance(Type abs_tolerance) {
-      CHECK_GT(abs_tolerance, Type(0.0)) 
-          << "Absolute tolerance must be positive.";
-      abs_tolerance_ = abs_tolerance;
+    inline void setParamTolerance(Type param_tolerance) {
+      CHECK_GT(param_tolerance, Type(0.0)) 
+          << "Parameter tolerance must be positive.";
+      param_tolerance_ = param_tolerance;
     }
-    inline void setRelTolerance(Type rel_tolerance) {
-      CHECK_GT(rel_tolerance, Type(0.0)) 
-          << "Relative tolerance must be positive.";
-      rel_tolerance_ = rel_tolerance;
+    inline void setFuncTolerance(Type func_tolerance) {
+      CHECK_GT(func_tolerance, Type(0.0)) 
+          << "Function tolerance must be positive.";
+      func_tolerance_ = func_tolerance;
     }
   private:
     int min_iterations_;
     int max_iterations_;
-    Type abs_tolerance_;
-    Type rel_tolerance_;
+    Type param_tolerance_;
+    Type func_tolerance_;
   } options;
   
   // Find minimum of function.
