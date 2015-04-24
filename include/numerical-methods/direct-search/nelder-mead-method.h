@@ -104,8 +104,8 @@ public:
         }
         
         // Check convergence.
-        is_converged = dist <= std::max(this->options.getAbsTolerance(), 
-            this->options.getRelTolerance() * points.col(k).norm());
+        is_converged = dist <= std::max(this->options.getParamTolerance(), 
+            this->options.getFuncTolerance() * points.col(k).norm());
         if (is_converged) {
           break;
         }

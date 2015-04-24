@@ -74,26 +74,7 @@ std::vector<Problem<Type, Size>> defProblems() {
         tolerance);
     problems.push_back(problem);
     
-  }/*
-  {
-    
-    // Freudenstein and Roth function in More et al. (1981).
-    const std::function<Type(const vector&)>
-        function = [](const vector& x) -> Type {
-      vector y(2);
-      y(0) = - 13.0 + x(0) + ((5.0 - x(1)) * x(1) - 2.0) * x(1);
-      y(1) = - 29.0 + x(0) + ((1.0 + x(1)) * x(1) - 14.0) * x(1);
-      return y.squaredNorm();
-    };
-    const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({0.5, - 2.0});
-    const vector minimum = vectorize<Type, Size>({5.0, 4.0});
-    const Type tolerance = 1.0e-3;
-    Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
-        tolerance);
-    problems.push_back(problem);
-    
-  }*/
+  }
   return problems;
 }
 
@@ -109,8 +90,8 @@ protected:
   std::vector<Problem<typename Method::type, Method::size>> problems;
   const typename Method::type min_iterations = 10;
   const typename Method::type max_iterations = 1000;
-  const typename Method::type abs_tolerance = 1.0e-12;
-  const typename Method::type rel_tolerance = 1.0e-12;
+  const typename Method::type param_tolerance = 1.0e-12;
+  const typename Method::type func_tolerance = 1.0e-12;
   const typename Method::type init_scale = 1.0;
 };
 
@@ -125,8 +106,8 @@ TYPED_TEST(DirectSearchMethodTest, FindsMinimum) {
     TypeParam method(problem.dimension);
     method.options.setMinIterations(this->min_iterations);
     method.options.setMaxIterations(this->max_iterations);
-    method.options.setAbsTolerance(this->abs_tolerance);
-    method.options.setRelTolerance(this->rel_tolerance);
+    method.options.setParamTolerance(this->param_tolerance);
+    method.options.setFuncTolerance(this->func_tolerance);
     method.options.setInitScale(this->init_scale);
     const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
         minimum = method.minimize(problem.function, problem.initial_guess);
