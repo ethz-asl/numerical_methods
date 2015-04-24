@@ -14,10 +14,7 @@ namespace numerical_methods {
 template <typename Type, int Size>
 Eigen::Matrix<Type, Size, 1> 
     vectorize(const std::initializer_list<Type>& list) {
-  Eigen::Matrix<Type, Size, 1> vector;
-  if (Size == Eigen::Dynamic) {
-    vector.resize(list.size());
-  }
+  Eigen::Matrix<Type, Size, 1> vector(list.size());
   std::size_t i = 0;
   for (const Type& element : list) {
     vector(i++) = element;
@@ -64,10 +61,7 @@ std::vector<Problem<Type, Size>> defProblems() {
     // Rosenbrock function in More et al. (1981).
     const std::function<Type(const vector&)> 
         function = [](const vector& x) -> Type {
-      vector y;
-      if (Size == Eigen::Dynamic) {
-        y.resize(2);
-      }
+      vector y(2);
       y(0) = 10.0 * (x(1) - std::pow(x(0), 2));
       y(1) = 1.0 - x(0);
       return y.squaredNorm();
@@ -86,10 +80,7 @@ std::vector<Problem<Type, Size>> defProblems() {
     // Freudenstein and Roth function in More et al. (1981).
     const std::function<Type(const vector&)>
         function = [](const vector& x) -> Type {
-      vector y;
-      if (Size == Eigen::Dynamic) {
-        y.resize(2);
-      }
+      vector y(2);
       y(0) = - 13.0 + x(0) + ((5.0 - x(1)) * x(1) - 2.0) * x(1);
       y(1) = - 29.0 + x(0) + ((1.0 + x(1)) * x(1) - 14.0) * x(1);
       return y.squaredNorm();

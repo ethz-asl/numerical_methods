@@ -6,6 +6,7 @@
 
 namespace numerical_methods {
 
+// Vector plus scalar.
 template <typename Type, int Size>
 Eigen::Matrix<Type, Size, 1> operator+(const Eigen::Matrix<Type, Size, 1>& x, 
     Type a) {
@@ -16,12 +17,35 @@ Eigen::Matrix<Type, Size, 1> operator+(const Eigen::Matrix<Type, Size, 1>& x,
   return y;
 }
 
+// Scalar plus vector.
+template <typename Type, int Size>
+Eigen::Matrix<Type, Size, 1> operator+(Type a, 
+    const Eigen::Matrix<Type, Size, 1>& x) {
+  Eigen::Matrix<Type, Size, 1> y(x);
+  for (std::size_t i = 0; i < y.size(); ++i) {
+    y(i) += a;
+  }
+  return y;
+}
+
+// Vector minus scalar.
 template <typename Type, int Size>
 Eigen::Matrix<Type, Size, 1> operator-(const Eigen::Matrix<Type, Size, 1>& x, 
     Type a) {
   Eigen::Matrix<Type, Size, 1> y(x);
   for (std::size_t i = 0; i < y.size(); ++i) {
     y(i) -= a;
+  }
+  return y;
+}
+
+// Scalar minus vector.
+template <typename Type, int Size>
+Eigen::Matrix<Type, Size, 1> operator-(Type a,
+    const Eigen::Matrix<Type, Size, 1>& x) {
+  Eigen::Matrix<Type, Size, 1> y(- x);
+  for (std::size_t i = 0; i < y.size(); ++i) {
+    y(i) += a;
   }
   return y;
 }

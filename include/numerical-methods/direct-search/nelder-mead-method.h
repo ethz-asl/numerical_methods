@@ -52,20 +52,16 @@ public:
   Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
     
+    const int dimension = this->getDimension();
+    
     typename std::conditional<Size != Eigen::Dynamic, 
         Eigen::Matrix<Type, Size, Size + 1>, 
-        Eigen::Matrix<Type, Size, Size>>::type points;
+        Eigen::Matrix<Type, Size, Size>>::type 
+            points(dimension, dimension + 1);
     
     typename std::conditional<Size != Eigen::Dynamic, 
         Eigen::Matrix<Type, Size + 1, 1>, 
-        Eigen::Matrix<Type, Size, 1>>::type values;
-    
-    const int dimension = this->getDimension();
-    
-    if (Size == Eigen::Dynamic) {
-      points.resize(dimension, dimension + 1);
-      values.resize(dimension + 1);
-    }
+        Eigen::Matrix<Type, Size, 1>>::type values(dimension + 1);
     
     // Initialize simplex.
     const Type scale = this->options.getInitScale();
@@ -82,10 +78,7 @@ public:
       ind[n] = n;
     }
     
-    Eigen::Matrix<Type, Size, 1> centroid;
-    if (Size == Eigen::Dynamic) {
-      centroid.resize(dimension);
-    }
+    Eigen::Matrix<Type, Size, 1> centroid(dimension);
     
     bool is_converged = false;
     for (int iter = 0; iter < this->options.getMaxIterations(); ++iter) {
