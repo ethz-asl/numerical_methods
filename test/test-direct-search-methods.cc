@@ -47,18 +47,14 @@ const vector minimum;
 const Type tolerance;
 };
 
-// Create suite of integration test problems. Based on More et al. (1981).
-// 
-// J. J. More, B. S. Garbow and K. E. Hillstrom, "Testing Unconstrained 
-// Optimization Software," in ACM Transactions on Mathematical Software, 
-// vol. 7, no. 1, pp. 136-140 (1981).
+// Create suite of integration test problems.
 template <typename Type, int Size>
 std::vector<Problem<Type, Size>> defProblems() {
   using vector = Eigen::Matrix<Type, Size, 1>;
   std::vector<Problem<Type, Size>> problems;
   {
     
-    // Quadratic function.
+    // Booth function.
     const std::function<Type(const vector&)> 
         function = [](const vector& x) -> Type {
       return std::pow(x(0) + 2.0 * x(1) - 7.0, 2) 
@@ -75,7 +71,7 @@ std::vector<Problem<Type, Size>> defProblems() {
   }
   {
     
-    // Rosenbrock's function in More et al. (1981).
+    // Rosenbrock function.
     const std::function<Type(const vector&)> 
         function = [](const vector& x) -> Type {
       return std::pow(1.0 - x(0), 2) 
@@ -92,7 +88,7 @@ std::vector<Problem<Type, Size>> defProblems() {
   }
   {
     
-    // McCormick's function in More et al. (1981).
+    // McCormick function.
     const std::function<Type(const vector&)> 
         function = [](const vector& x) -> Type {
       return std::sin(x(0) + x(1)) + std::pow(x(0) - x(1), 2) - 1.5 * x(0) 
@@ -109,7 +105,7 @@ std::vector<Problem<Type, Size>> defProblems() {
   }
   {
     
-    // Zakharov's function in More et al. (1981).
+    // Zakharov function.
     const std::function<Type(const vector&)> 
         function = [](const vector& x) -> Type {
       return std::pow(x(0), 2) + std::pow(x(1), 2) 
@@ -118,6 +114,23 @@ std::vector<Problem<Type, Size>> defProblems() {
     const int dimension = 2;
     const vector initial_guess = vectorize<Type, Size>({2.0, 1.0});
     const vector minimum = vectorize<Type, Size>({0, 0});
+    const Type tolerance = 1.0e-2;
+    Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
+        tolerance);
+    problems.push_back(problem);
+    
+  }
+  {
+    
+    // Dixon-Price function.
+    const std::function<Type(const vector&)> 
+        function = [](const vector& x) -> Type {
+      return std::pow(x(0) - 1.0, 2) 
+          + 2.0 * std::pow(2.0 * std::pow(x(1), 2) - x(0), 2);
+    };
+    const int dimension = 2;
+    const vector initial_guess = vectorize<Type, Size>({- 1.0, - 1.0});
+    const vector minimum = vectorize<Type, Size>({1.0, - 1.0 / std::sqrt(2.0)});
     const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
