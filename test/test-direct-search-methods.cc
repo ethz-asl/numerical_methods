@@ -90,6 +90,23 @@ std::vector<Problem<Type, Size>> defProblems() {
     problems.push_back(problem);
     
   }
+  {
+    
+    // McCormick's function in More et al. (1981).
+    const std::function<Type(const vector&)> 
+        function = [](const vector& x) -> Type {
+      return std::sin(x(0) + x(1)) + std::pow(x(0) - x(1), 2) - 1.5 * x(0) 
+          + 2.5 * x(1) + 1.0;
+    };
+    const int dimension = 2;
+    const vector initial_guess = vectorize<Type, Size>({1.0, 1.0});
+    const vector minimum = vectorize<Type, Size>({- 0.54719, -1.54719});
+    const Type tolerance = 1.0e-2;
+    Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
+        tolerance);
+    problems.push_back(problem);
+    
+  }
   return problems;
 }
 
