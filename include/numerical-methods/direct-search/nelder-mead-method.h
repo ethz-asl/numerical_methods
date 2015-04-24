@@ -96,16 +96,14 @@ public:
       
       if (iter > this->options.getMinIterations()) {
         
-        Type dist = 0.0;
-        for (std::size_t n = 0; n <= dimension; ++n) {
-          if (n != k) {
-            dist = std::max(dist, (points.col(n) - points.col(k)).norm());
-          }
+        Type diff = 0.0;
+        for (std::size_t n = 1; n <= dimension; ++n) {
+          diff = std::max(diff, (points.col(ind[n]) - points.col(i)).norm());
         }
         
         // Check convergence.
-        is_converged = dist <= std::max(this->options.getParamTolerance(), 
-            this->options.getFuncTolerance() * points.col(k).norm());
+        is_converged = diff <= std::max(this->options.getAbsTolerance(), 
+          this->options.getRelTolerance() * points.col(i).norm());
         if (is_converged) {
           break;
         }
@@ -123,7 +121,7 @@ public:
       
       // Reflect point.
       const Eigen::Matrix<Type, Size, 1> reflection_point = centroid 
-          + reflection_coeff_ * (centroid - points.col(k));
+          + reflection_coefficient_ * (centroid - points.col(k));
       const Type reflection_value = function(reflection_point);
       if ((reflection_value < values(j)) && (reflection_value >= values(i))) {
         points.col(k) = reflection_point;
@@ -132,7 +130,7 @@ public:
         
         // Expand point.
         const Eigen::Matrix<Type, Size, 1> expansion_point = centroid 
-            + expansion_coeff_ * (centroid - points.col(k));
+            + expansion_coefficient_ * (centroid - points.col(k));
         const Type expansion_value = function(expansion_point);
         if (expansion_value < reflection_value) {
           points.col(k) = expansion_point;
@@ -146,7 +144,7 @@ public:
         
         // Contract point.
         const Eigen::Matrix<Type, Size, 1> contraction_point = centroid 
-            + contraction_coeff_ * (centroid - points.col(k));
+            + contraction_coefficient_ * (centroid - points.col(k));
         const Type contraction_value = function(contraction_point);
         if (contraction_value < values(k)) {
           points.col(k) = contraction_point;
@@ -157,7 +155,7 @@ public:
           for (std::size_t n = 0; n <= dimension; ++n) {
             if (n != i) {
               points.col(n) = points.col(i) 
-                  + reduction_coeff_ * (points.col(n) - points.col(i));
+                  + reduction_coefficient_ * (points.col(n) - points.col(i));
               values(n) = function(points.col(n));
             }
           }
@@ -191,21 +189,21 @@ public:
 private:
   
   // Simplex coefficients.
-  static constexpr Type reflection_coeff_ = 1.0;
-  static constexpr Type expansion_coeff_ = 2.0;
-  static constexpr Type contraction_coeff_ = - 0.5;
-  static constexpr Type reduction_coeff_ = 0.5;
+  static constexpr Type reflection_coefficient_ = 1.0;
+  static constexpr Type expansion_coefficient_= 2.0;
+  static constexpr Type contraction_coefficient_ = - 0.5;
+  static constexpr Type reduction_coefficient_ = 0.5;
   
 }; // NelderMeadMethod
 
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::reflection_coeff_;
+constexpr Type NelderMeadMethod<Type, Size>::reflection_coefficient_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::expansion_coeff_;
+constexpr Type NelderMeadMethod<Type, Size>::expansion_coefficient_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::contraction_coeff_;
+constexpr Type NelderMeadMethod<Type, Size>::contraction_coefficient_;
 template <typename Type, int Size> 
-constexpr Type NelderMeadMethod<Type, Size>::reduction_coeff_;
+constexpr Type NelderMeadMethod<Type, Size>::reduction_coefficient_;
 
 } // namespace numerical_methods
 

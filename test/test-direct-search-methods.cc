@@ -90,8 +90,8 @@ protected:
   std::vector<Problem<typename Method::type, Method::size>> problems;
   const typename Method::type min_iterations = 10;
   const typename Method::type max_iterations = 1000;
-  const typename Method::type param_tolerance = 1.0e-12;
-  const typename Method::type func_tolerance = 1.0e-12;
+  const typename Method::type abs_tolerance = 1.0e-16;
+  const typename Method::type rel_tolerance = 1.0e-12;
   const typename Method::type init_scale = 1.0;
 };
 
@@ -106,8 +106,8 @@ TYPED_TEST(DirectSearchMethodTest, FindsMinimum) {
     TypeParam method(problem.dimension);
     method.options.setMinIterations(this->min_iterations);
     method.options.setMaxIterations(this->max_iterations);
-    method.options.setParamTolerance(this->param_tolerance);
-    method.options.setFuncTolerance(this->func_tolerance);
+    method.options.setAbsTolerance(this->abs_tolerance);
+    method.options.setRelTolerance(this->rel_tolerance);
     method.options.setInitScale(this->init_scale);
     const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
         minimum = method.minimize(problem.function, problem.initial_guess);
