@@ -107,6 +107,23 @@ std::vector<Problem<Type, Size>> defProblems() {
     problems.push_back(problem);
     
   }
+  {
+    
+    // Zakharov's function in More et al. (1981).
+    const std::function<Type(const vector&)> 
+        function = [](const vector& x) -> Type {
+      return std::pow(x(0), 2) + std::pow(x(1), 2) 
+          + std::pow(0.5 * x(0) + x(1), 2) + std::pow(0.5 * x(0) + x(1), 4);
+    };
+    const int dimension = 2;
+    const vector initial_guess = vectorize<Type, Size>({2.0, 1.0});
+    const vector minimum = vectorize<Type, Size>({0, 0});
+    const Type tolerance = 1.0e-2;
+    Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
+        tolerance);
+    problems.push_back(problem);
+    
+  }
   return problems;
 }
 
