@@ -24,16 +24,16 @@ Eigen::Matrix<Type, Size, 1>
 
 template <typename Type, int Size>
 struct Problem {
-using vector = Eigen::Matrix<Type, Size, 1>;
+using point = Eigen::Matrix<Type, Size, 1>;
 template <bool Static = Size != Eigen::Dynamic>
-Problem(const std::function<Type(const vector&)>& function, 
-    const vector& initial_guess, const vector& minimum, Type tolerance, 
+Problem(const std::function<Type(const point&)>& function, 
+    const point& initial_guess, const point& minimum, Type tolerance, 
     typename std::enable_if<Static>::type* = nullptr) : dimension(Size), 
     function(function), initial_guess(initial_guess), minimum(minimum), 
     tolerance(tolerance) {}
 template <bool Dynamic = Size == Eigen::Dynamic>
-Problem(int dimension, const std::function<Type(const vector&)>& function, 
-    const vector& initial_guess, const vector& minimum, Type tolerance, 
+Problem(int dimension, const std::function<Type(const point&)>& function, 
+    const point& initial_guess, const point& minimum, Type tolerance, 
     typename std::enable_if<Dynamic>::type* = nullptr) : dimension(dimension), 
     function(function), initial_guess(initial_guess), minimum(minimum), 
     tolerance(tolerance) {
@@ -41,28 +41,29 @@ Problem(int dimension, const std::function<Type(const vector&)>& function,
 }
 typedef Type type;
 const int dimension;
-const std::function<Type(const vector&)> function;
-const vector initial_guess;
-const vector minimum;
+const std::function<Type(const point&)> function;
+const point initial_guess;
+const point minimum;
 const Type tolerance;
 };
 
 // Create suite of integration test problems.
 template <typename Type, int Size>
 std::vector<Problem<Type, Size>> defProblems() {
-  using vector = Eigen::Matrix<Type, Size, 1>;
   std::vector<Problem<Type, Size>> problems;
   {
     
     // Booth function.
-    const std::function<Type(const vector&)> 
-        function = [](const vector& x) -> Type {
+    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
+        function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       return std::pow(x(0) + 2.0 * x(1) - 7.0, 2) 
           + std::pow(2.0 * x(0) + x(1) - 5.0, 2);
     };
     const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({0.0, 0.0});
-    const vector minimum = vectorize<Type, Size>({1.0, 3.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        initial_guess = vectorize<Type, Size>({0.0, 0.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        minimum = vectorize<Type, Size>({1.0, 3.0});
     const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
@@ -72,14 +73,16 @@ std::vector<Problem<Type, Size>> defProblems() {
   {
     
     // Rosenbrock function.
-    const std::function<Type(const vector&)> 
-        function = [](const vector& x) -> Type {
+    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
+        function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       return std::pow(1.0 - x(0), 2) 
           + 100.0 * std::pow(std::pow(x(0), 2) - x(1), 2);
     };
     const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({- 1.0, - 1.0});
-    const vector minimum = vectorize<Type, Size>({1.0, 1.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        initial_guess = vectorize<Type, Size>({- 1.0, - 1.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        minimum = vectorize<Type, Size>({1.0, 1.0});
     const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
@@ -89,14 +92,16 @@ std::vector<Problem<Type, Size>> defProblems() {
   {
     
     // McCormick function.
-    const std::function<Type(const vector&)> 
-        function = [](const vector& x) -> Type {
+    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
+        function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       return std::sin(x(0) + x(1)) + std::pow(x(0) - x(1), 2) - 1.5 * x(0) 
           + 2.5 * x(1) + 1.0;
     };
     const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({1.0, 1.0});
-    const vector minimum = vectorize<Type, Size>({- 0.54719, -1.54719});
+    const Eigen::Matrix<Type, Size, 1> 
+        initial_guess = vectorize<Type, Size>({1.0, 1.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        minimum = vectorize<Type, Size>({- 0.54719, -1.54719});
     const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
@@ -106,14 +111,16 @@ std::vector<Problem<Type, Size>> defProblems() {
   {
     
     // Zakharov function.
-    const std::function<Type(const vector&)> 
-        function = [](const vector& x) -> Type {
+    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
+        function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       return std::pow(x(0), 2) + std::pow(x(1), 2) 
           + std::pow(0.5 * x(0) + x(1), 2) + std::pow(0.5 * x(0) + x(1), 4);
     };
     const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({2.0, 1.0});
-    const vector minimum = vectorize<Type, Size>({0, 0});
+    const Eigen::Matrix<Type, Size, 1> 
+        initial_guess = vectorize<Type, Size>({2.0, 1.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        minimum = vectorize<Type, Size>({0, 0});
     const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
@@ -123,14 +130,16 @@ std::vector<Problem<Type, Size>> defProblems() {
   {
     
     // Dixon-Price function.
-    const std::function<Type(const vector&)> 
-        function = [](const vector& x) -> Type {
+    const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> 
+        function = [](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       return std::pow(x(0) - 1.0, 2) 
           + 2.0 * std::pow(2.0 * std::pow(x(1), 2) - x(0), 2);
     };
     const int dimension = 2;
-    const vector initial_guess = vectorize<Type, Size>({- 1.0, - 1.0});
-    const vector minimum = vectorize<Type, Size>({1.0, - 1.0 / std::sqrt(2.0)});
+    const Eigen::Matrix<Type, Size, 1> 
+        initial_guess = vectorize<Type, Size>({- 1.0, - 1.0});
+    const Eigen::Matrix<Type, Size, 1> 
+        minimum = vectorize<Type, Size>({1.0, - 1.0 / std::sqrt(2.0)});
     const Type tolerance = 1.0e-2;
     Problem<Type, Size> problem(dimension, function, initial_guess, minimum, 
         tolerance);
