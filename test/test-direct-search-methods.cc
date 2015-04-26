@@ -15,50 +15,33 @@ namespace numerical_methods {
 template <typename Type, int Size>
 class TestSuite {
 public:
-  template <bool Static = Size != Eigen::Dynamic>
-  TestSuite(Type tolerance, 
-      typename std::enable_if<Static>::type* = nullptr) : 
-      dimension_(Size), tolerance_(tolerance) {
-    CHECK_GE(tolerance, 0.0) << "Tolerance must be non-negative.";
-    initialize();
-  }
-  template <bool Dynamic = Size == Eigen::Dynamic>
-  TestSuite(int dimension, Type tolerance, 
-      typename std::enable_if<Dynamic>::type* = nullptr) : 
-      dimension_(dimension), tolerance_(tolerance) {
-    CHECK_GT(dimension, 0) << "Dimension must be positive.";
+  TestSuite(int dimension, Type tolerance) : dimension_(dimension), 
+      tolerance_(tolerance) {
+    if (Size != Eigen::Dynamic) {
+      CHECK_EQ(dimension, Size) << "Dimension must be consistent.";
+    } else {
+      CHECK_GT(dimension, 0) << "Dimension must be positive.";
+    }
     CHECK_GE(tolerance, 0.0) << "Tolerance must be non-negative.";
     initialize();
   }
   class Problem {
   public:
-    template <bool Static = Size != Eigen::Dynamic>
-    Problem(
-        const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& 
-            function, 
-        const Eigen::Matrix<Type, Size, 1>& init_guess, 
-        const Eigen::Matrix<Type, Size, 1>& glob_minimum, 
-        Type param_tolerance, 
-        typename std::enable_if<Static>::type* = nullptr) : 
-            dimension_(Size), 
-            function_(function), 
-            init_guess_(init_guess), 
-            glob_minimum_(glob_minimum), 
-            param_tolerance_(param_tolerance) {}
-    template <bool Dynamic = Size == Eigen::Dynamic>
     Problem(int dimension, 
         const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& 
             function, 
         const Eigen::Matrix<Type, Size, 1>& init_guess, 
         const Eigen::Matrix<Type, Size, 1>& glob_minimum, 
-        Type param_tolerance, 
-        typename std::enable_if<Dynamic>::type* = nullptr) : 
-            dimension_(dimension), 
-            function_(function), 
-            init_guess_(init_guess), 
-            glob_minimum_(glob_minimum), 
-            param_tolerance_(param_tolerance) {
-      CHECK_GT(dimension, 0) << "Dimension must be positive.";
+        Type param_tolerance) : dimension_(dimension), 
+                                function_(function), 
+                                init_guess_(init_guess), 
+                                glob_minimum_(glob_minimum), 
+                                param_tolerance_(param_tolerance) {
+      if (Size != Eigen::Dynamic) {
+        CHECK_EQ(dimension, Size) << "Dimension must be consistent.";
+      } else {
+        CHECK_GT(dimension, 0) << "Dimension must be positive.";
+      }
     }
     int getDimension() const {
       return dimension_;
@@ -239,19 +222,54 @@ protected:
   const typename Method::type func_tolerance = 1.0e-6;
 };
 
-typedef testing::Types<NelderMeadMethod<double, Eigen::Dynamic>> Types;
+template <class Method>
+class StaticDirectSearchMethodTest : public DirectSearchMethodTest<Method> {
+protected:
+  const int dimension = Method::size;
+};
 
-TYPED_TEST_CASE(DirectSearchMethodTest, Types);
+typedef testing::Types<NelderMeadMethod<double, 2>, 
+                       NelderMeadMethod<double, 3>, 
+                       NelderMeadMethod<double, 4>, 
+                       NelderMeadMethod<double, 5>> StaticTypes;
+                       
+TYPED_TEST_CASE(StaticDirectSearchMethodTest, StaticTypes);
 
 // Check that integration method achieves desired error.
-TYPED_TEST(DirectSearchMethodTest, FindsMinimum) {
-  if (TypeParam::size != Eigen::Dynamic) {
-    /*
-    
-    TODO(gabrieag): Add static test cases.
-    
+TYPED_TEST(StaticDirectSearchMethodTest, FindsMinimum) {
+  TestSuite<typename TypeParam::type, TypeParam::size> 
+      test_suite(this->dimension, this->tolerance);
+  for (std::size_t i = 0; i < test_suite.getNumProblems(); ++i) {
+    const typename TestSuite<typename TypeParam::type, 
+        TypeParam::size>::Problem& problem = test_suite.getProblem(i);
+    TypeParam method;
+    method.options.setMinIterations(this->min_iterations);
+    method.options.setMaxIterations(this->max_iterations);
+    method.options.setParamTolerance(this->param_tolerance);
+    method.options.setFuncTolerance(this->func_tolerance);
+    const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
+        glob_minimum = method.minimize(problem.getFunction(), 
+                                       problem.getInitGuess());
+    EXPECT_LT((glob_minimum - problem.getGlobMinimum()).norm(), 
+        problem.getParamTolerance());
+  }
+}
+
+template <class Method>
+class DynamicDirectSearchMethodTest : public DirectSearchMethodTest<Method> {
+protected:
+  const std::vector<int> dimensions = {2, 3, 4, 5};
+};
+
+typedef testing::Types<NelderMeadMethod<double, Eigen::Dynamic>> DynamicTypes;
+
+TYPED_TEST_CASE(DynamicDirectSearchMethodTest, DynamicTypes);
+
+// Check that integration method achieves desired error.
+TYPED_TEST(DynamicDirectSearchMethodTest, FindsMinimum) {
+  for (int dimension : this->dimensions) {
     TestSuite<typename TypeParam::type, TypeParam::size> 
-        test_suite(this->tolerance);
+        test_suite(dimension, this->tolerance);
     for (std::size_t i = 0; i < test_suite.getNumProblems(); ++i) {
       const typename TestSuite<typename TypeParam::type, 
           TypeParam::size>::Problem& problem = test_suite.getProblem(i);
@@ -265,27 +283,6 @@ TYPED_TEST(DirectSearchMethodTest, FindsMinimum) {
                                          problem.getInitGuess());
       EXPECT_LT((glob_minimum - problem.getGlobMinimum()).norm(), 
           problem.getParamTolerance());
-    }
-    
-    */
-  } else {
-    for (int dimension : this->dimensions) {
-      TestSuite<typename TypeParam::type, TypeParam::size> 
-          test_suite(dimension, this->tolerance);
-      for (std::size_t i = 0; i < test_suite.getNumProblems(); ++i) {
-        const typename TestSuite<typename TypeParam::type, 
-            TypeParam::size>::Problem& problem = test_suite.getProblem(i);
-        TypeParam method(problem.getDimension());
-        method.options.setMinIterations(this->min_iterations);
-        method.options.setMaxIterations(this->max_iterations);
-        method.options.setParamTolerance(this->param_tolerance);
-        method.options.setFuncTolerance(this->func_tolerance);
-        const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
-            glob_minimum = method.minimize(problem.getFunction(), 
-                                           problem.getInitGuess());
-        EXPECT_LT((glob_minimum - problem.getGlobMinimum()).norm(), 
-            problem.getParamTolerance());
-      }
     }
   }
 }
