@@ -11,7 +11,13 @@
 
 namespace numerical_methods {
 
-// Create suite of test problems.
+// Suite of test problems for direct search methods, based on Surjanovic and 
+// Bingham (2013).
+// 
+// S. Surjanovic and D. Bingham, "Virtual Library of Simulation Experiments - 
+// Test Functions and Datasets: Optimization Test Problems," available online 
+// at http://www.sfu.ca/~ssurjano/optimization.html [accessed on April, 2015], 
+// Simon Fraser University (2013).
 template <typename Type, int Size>
 class TestSuite {
 public:
@@ -84,7 +90,7 @@ private:
     Eigen::Matrix<Type, Size, 1> init_guess(dimension_);
     Eigen::Matrix<Type, Size, 1> glob_minimum(dimension_);
       
-    // Rosenbrock function.
+    // Rosenbrock function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
       for (int i = 1; i < this->dimension_; ++i) {
@@ -98,7 +104,7 @@ private:
     problems_.push_back(Problem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
-    // Rotated ellipsoid function.
+    // Rotated ellipsoid function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
       for (int i = 0; i < this->dimension_; ++i) {
@@ -115,7 +121,7 @@ private:
     problems_.push_back(Problem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
-    // Sum-of-powers function.
+    // Sum-of-powers function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
       for (int i = 0; i < this->dimension_; ++i) {
@@ -132,7 +138,7 @@ private:
     
     TODO(gabrieag): Remove this function.
     
-    // Perm function.
+    // Perm function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
       for (int i = 0; i < this->dimension_; ++i) {
@@ -154,7 +160,7 @@ private:
     
     */
     
-    // Zakharov function.
+    // Zakharov function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
       Type increment = 0.0;
@@ -174,7 +180,7 @@ private:
     problems_.push_back(Problem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
-    // Dixon-Price function.
+    // Dixon-Price function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = std::pow(x(0) - 1.0, 2);
       for (int i = 1; i < this->dimension_; ++i) {
@@ -190,7 +196,7 @@ private:
     problems_.push_back(Problem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
-    // Styblinski-Tang function.
+    // Styblinski-Tang function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
       for (int i = 0; i < this->dimension_; ++i) {
