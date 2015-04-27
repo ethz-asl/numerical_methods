@@ -23,7 +23,7 @@ namespace numerical_methods {
 // simplified for fixed-precision arithmetic.
 // 
 // D. H. Bailey, K. Jeyabalan, and X. S. Li, "A Comparison of Three High-
-// precision Quadrature Schemes," Experimental Mathematics, vol. 14, no. 3, 
+// precision Quadrature Schemes," in Experimental Mathematics, vol. 14, no. 3, 
 // pp. 317-329 (2005).
 template <typename Type>
 class LogTanhSinhMethod : public IntegrationMethod<Type> {
@@ -59,6 +59,7 @@ public:
     
     Type step = 1.0;
     Type sum = - getInf<Type>();
+    Type error = getUndef<Type>();
     for (int k = 0; k < order_; ++k) {
       
       // Update sum.
@@ -80,12 +81,15 @@ public:
       values.push_back(std::log(step) + sum);
       
       // Estimate error and break if desired error achieved.
-      if (estimError(values) <= this->getError()) {
+      error = estimError(values);
+      if (error <= this->getError()) {
         return values.back();
       }
       
     }
     
+    LOG_IF(WARNING, error <= this->getError())
+        << "Maximum refinement reached. Results may be inaccurate.";
     return values.back();
     
   }

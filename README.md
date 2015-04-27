@@ -1,4 +1,4 @@
 Numerical methods
 =================
 
-Simple, streamlined, template-only implementations of miscellaneous numerical methods, including function integration, direct search, and linear regression.
+Simple, streamlined, template-only implementations of miscellaneous numerical methods, including integration, direct search, and linear regression.
