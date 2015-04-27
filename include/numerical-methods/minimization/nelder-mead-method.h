@@ -10,7 +10,6 @@
 #include <glog/logging.h>
 
 #include "numerical-methods/common-definitions.h"
-#include "numerical-methods/eigen-utility-functions.h"
 #include "numerical-methods/minimization/minimization-method.h"
 
 namespace numerical_methods {
