@@ -134,32 +134,6 @@ private:
     problems_.push_back(Problem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
-    /*
-    
-    TODO(gabrieag): Remove this function.
-    
-    // Perm function in S. Surjanovic and D. Bingham (2013).
-    function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
-      Type value = 0.0;
-      for (int i = 0; i < this->dimension_; ++i) {
-        Type increment = 0.0;
-        for (int j = 0; j < this->dimension_; ++j) {
-          increment += static_cast<Type>(std::pow(j + 1, i + 1)) 
-              * (std::pow(x(j) / static_cast<Type>(j + 1), i + 1) - 1.0);
-        }
-        value += std::pow(increment, 2);
-      }
-      return value;
-    };
-    init_guess.fill(- 1.0);
-    for (int i = 0; i < dimension_; ++i) {
-      glob_minimum(i) = static_cast<Type>(i + 1);
-    }
-    problems_.push_back(Problem(dimension_, function, init_guess, 
-        glob_minimum, tolerance_));
-    
-    */
-    
     // Zakharov function in S. Surjanovic and D. Bingham (2013).
     function = [this](const Eigen::Matrix<Type, Size, 1>& x) -> Type {
       Type value = 0.0;
