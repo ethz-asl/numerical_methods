@@ -1,5 +1,5 @@
-#ifndef NUMERICAL_METHODS_DIRECT_SEARCH_NELDER_MEAD_METHOD_H_
-#define NUMERICAL_METHODS_DIRECT_SEARCH_NELDER_MEAD_METHOD_H_
+#ifndef NUMERICAL_METHODS_MINIMIZATION_NELDER_MEAD_METHOD_H_
+#define NUMERICAL_METHODS_MINIMIZATION_NELDER_MEAD_METHOD_H_
 
 #include <cmath>
 #include <limits>
@@ -11,7 +11,7 @@
 
 #include "numerical-methods/common-definitions.h"
 #include "numerical-methods/eigen-utility-functions.h"
-#include "numerical-methods/direct-search/direct-search-method.h"
+#include "numerical-methods/minimization/minimization-method.h"
 
 namespace numerical_methods {
 
@@ -39,16 +39,16 @@ namespace numerical_methods {
 // Minimization using a Simplex Procedure," in Journal of the Royal Statistical 
 // Society, Series C (Applied Statistics), vol. 27, no. 3, pp. 380-382 (1978).
 template <typename Type, int Size>
-class NelderMeadMethod : public DirectSearchMethod<Type, Size> {
+class NelderMeadMethod : public MinimizationMethod<Type, Size> {
 public:
   
   template <bool Static = Size != Eigen::Dynamic>
   NelderMeadMethod(typename std::enable_if<Static>::type* = nullptr) : 
-      DirectSearchMethod<Type, Size>() {}
+      MinimizationMethod<Type, Size>() {}
   template <bool Dynamic = Size == Eigen::Dynamic>
   explicit NelderMeadMethod(int dimension, 
       typename std::enable_if<Dynamic>::type* = nullptr) : 
-      DirectSearchMethod<Type, Size>(dimension) {}
+      MinimizationMethod<Type, Size>(dimension) {}
   
   template <class Function>
   Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
@@ -203,9 +203,9 @@ public:
     
   }
   
-  class Options : public DirectSearchMethod<Type, Size>::Options {
+  class Options : public MinimizationMethod<Type, Size>::Options {
   public:
-    Options() : DirectSearchMethod<Type, Size>::Options(), 
+    Options() : MinimizationMethod<Type, Size>::Options(), 
         init_scale_(std::make_pair(5.0e-2, 0.25e-3)) {}
     inline const std::pair<Type, Type>& getInitScale() const {
       return init_scale_;
@@ -240,4 +240,4 @@ constexpr Type NelderMeadMethod<Type, Size>::shrinkage_coefficient_;
 
 } // namespace numerical_methods
 
-#endif // NUMERICAL_METHODS_DIRECT_SEARCH_NELDER_MEAD_METHOD_H_
+#endif // NUMERICAL_METHODS_MINIMIZATION_NELDER_MEAD_METHOD_H_

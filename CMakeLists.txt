@@ -26,11 +26,11 @@ target_link_libraries(test_log_integration_methods
   pthread
 )
 
-# Direct-search methods.
-catkin_add_gtest(test_direct_search_methods 
-  test/test-direct-search-methods.cc
+# Minimization methods.
+catkin_add_gtest(test_minimization_methods 
+  test/test-minimization-methods.cc
 )
-target_link_libraries(test_direct_search_methods 
+target_link_libraries(test_minimization_methods 
   ${PROJECT_NAME} 
   pthread
 )
