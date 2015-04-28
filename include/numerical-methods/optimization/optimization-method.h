@@ -1,5 +1,5 @@
-#ifndef NUMERICAL_METHODS_DIRECT_SEARCH_DIRECT_SEARCH_METHOD_H_
-#define NUMERICAL_METHODS_DIRECT_SEARCH_DIRECT_SEARCH_METHOD_H_
+#ifndef NUMERICAL_METHODS_OPTIMIZATION_OPTIMIZATION_METHOD_H_
+#define NUMERICAL_METHODS_OPTIMIZATION_OPTIMIZATION_METHOD_H_
 
 #include <type_traits>
 
@@ -11,22 +11,22 @@
 namespace numerical_methods {
 
 template <typename Type, int Size>
-class DirectSearchMethod {
+class OptimizationMethod {
 public:
   
   typedef Type type;
   static constexpr int size = Size;
   
   template <bool Static = Size != Eigen::Dynamic>
-  DirectSearchMethod(typename std::enable_if<Static>::type* = nullptr) : 
+  OptimizationMethod(typename std::enable_if<Static>::type* = nullptr) : 
       dimension_(Size) {}
   template <bool Dynamic = Size == Eigen::Dynamic>
-  explicit DirectSearchMethod(int dimension, 
+  explicit OptimizationMethod(int dimension, 
       typename std::enable_if<Dynamic>::type* = nullptr) : 
       dimension_(dimension) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
   }
-  virtual ~DirectSearchMethod() {}
+  virtual ~OptimizationMethod() {}
   
   // Return dimension.
   inline int getDimension() const {
@@ -86,8 +86,8 @@ public:
 private:
   const int dimension_;
   
-}; // DirectSearchMethod
+}; // OptimizationMethod
 
 } // namespace numerical_methods
 
-#endif // NUMERICAL_METHODS_DIRECT_SEARCH_DIRECT_SEARCH_METHOD_H_
+#endif // NUMERICAL_METHODS_OPTIMIZATION_OPTIMIZATION_METHOD_H_
