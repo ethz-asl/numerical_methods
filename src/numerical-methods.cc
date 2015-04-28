@@ -3,6 +3,8 @@
 
 #include "numerical-methods/optimization/nelder-mead-method.h"
 
+#include "numerical-methods/utility/incremental-statistics.h"
+
 namespace numerical_methods {
 
 } // numerical_methods
