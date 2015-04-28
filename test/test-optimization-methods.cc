@@ -6,13 +6,13 @@
 #include <gtest/gtest.h>
 
 #include "numerical-methods/common-definitions.h"
-#include "numerical-methods/minimization/minimization-method.h"
-#include "numerical-methods/minimization/nelder-mead-method.h"
+#include "numerical-methods/optimization/optimization-method.h"
+#include "numerical-methods/optimization/nelder-mead-method.h"
 
 namespace numerical_methods {
 
-// Suite of test problems for minimization methods, based on Surjanovic and 
-// Bingham (2013).
+// Suite of test problems for function minimization methods, based on 
+// Surjanovic and Bingham (2013).
 // 
 // S. Surjanovic and D. Bingham, "Virtual Library of Simulation Experiments - 
 // Test Functions and Datasets: Optimization Test Problems," available online 
@@ -188,7 +188,7 @@ private:
 };
 
 template <class Method>
-class MinimizationMethodTest : public testing::Test {
+class OptimizationMethodTest : public testing::Test {
 public:
   typedef typename Method::type type;
   static constexpr int size = Method::size;
@@ -203,7 +203,7 @@ protected:
 };
 
 template <class Method>
-class StaticMinimizationMethodTest : public MinimizationMethodTest<Method> {
+class StaticOptimizationMethodTest : public OptimizationMethodTest<Method> {
 protected:
   const int dimension = Method::size;
 };
@@ -213,10 +213,10 @@ typedef testing::Types<NelderMeadMethod<double, 2>,
                        NelderMeadMethod<double, 4>, 
                        NelderMeadMethod<double, 5>> StaticTypes;
                        
-TYPED_TEST_CASE(StaticMinimizationMethodTest, StaticTypes);
+TYPED_TEST_CASE(StaticOptimizationMethodTest, StaticTypes);
 
 // Check that integration method achieves desired error.
-TYPED_TEST(StaticMinimizationMethodTest, FindsMinimum) {
+TYPED_TEST(StaticOptimizationMethodTest, FindsMinimum) {
   TestSuite<typename TypeParam::type, TypeParam::size> 
       test_suite(this->dimension, this->tolerance);
   for (std::size_t i = 0; i < test_suite.getNumProblems(); ++i) {
@@ -236,17 +236,17 @@ TYPED_TEST(StaticMinimizationMethodTest, FindsMinimum) {
 }
 
 template <class Method>
-class DynamicMinimizationMethodTest : public MinimizationMethodTest<Method> {
+class DynamicOptimizationMethodTest : public OptimizationMethodTest<Method> {
 protected:
   const std::vector<int> dimensions = {2, 3, 4, 5};
 };
 
 typedef testing::Types<NelderMeadMethod<double, Eigen::Dynamic>> DynamicTypes;
 
-TYPED_TEST_CASE(DynamicMinimizationMethodTest, DynamicTypes);
+TYPED_TEST_CASE(DynamicOptimizationMethodTest, DynamicTypes);
 
 // Check that integration method achieves desired error.
-TYPED_TEST(DynamicMinimizationMethodTest, FindsMinimum) {
+TYPED_TEST(DynamicOptimizationMethodTest, FindsMinimum) {
   for (int dimension : this->dimensions) {
     TestSuite<typename TypeParam::type, TypeParam::size> 
         test_suite(dimension, this->tolerance);

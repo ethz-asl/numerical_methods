@@ -26,11 +26,11 @@ target_link_libraries(test_log_integration_methods
   pthread
 )
 
-# Minimization methods.
-catkin_add_gtest(test_minimization_methods 
-  test/test-minimization-methods.cc
+# Optimization methods.
+catkin_add_gtest(test_optimization_methods 
+  test/test-optimization-methods.cc
 )
-target_link_libraries(test_minimization_methods 
+target_link_libraries(test_optimization_methods 
   ${PROJECT_NAME} 
   pthread
 )

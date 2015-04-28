@@ -8,4 +8,4 @@ fi
 g++ -I $CURRENT_PATH/include/ $CURRENT_PATH/test/test-integration-methods.cc /usr/lib/libgtest.a /usr/lib/libgtest_main.a -lglog -lpthread -o $CURRENT_PATH/bin/test-integration-methods -std=c++11
 g++ -I $CURRENT_PATH/include/ $CURRENT_PATH/test/test-log-integration-methods.cc /usr/lib/libgtest.a /usr/lib/libgtest_main.a -lglog -lpthread -o $CURRENT_PATH/bin/test-log-integration-methods -std=c++11
 
-g++ -I $CURRENT_PATH/include/ -I /usr/local/include/eigen3 $CURRENT_PATH/test/test-minimization-methods.cc /usr/lib/libgtest.a /usr/lib/libgtest_main.a -lglog -lpthread -o $CURRENT_PATH/bin/test-minimization-methods -std=c++11
+g++ -I $CURRENT_PATH/include/ -I /usr/local/include/eigen3 $CURRENT_PATH/test/test-optimization-methods.cc /usr/lib/libgtest.a /usr/lib/libgtest_main.a -lglog -lpthread -o $CURRENT_PATH/bin/test-optimization-methods -std=c++11
