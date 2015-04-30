@@ -24,7 +24,10 @@ public:
       discount_(0.0), 
       weight_(0.0), 
       mean_(Size), 
-      covariance_(Size, Size) {}
+      covariance_(Size, Size) {
+    mean_.setZero();
+    covariance_.setZero();
+  }
   template <bool Static = Size != Eigen::Dynamic>
   IncrementalStatistics(Type discount, 
       typename std::enable_if<Static>::type* = nullptr) : 
@@ -35,6 +38,8 @@ public:
       covariance_(Size, Size) {
     CHECK_GE(discount, 0.0) << "Discount must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount must be less than or equal to one.";
+    mean_.setZero();
+    covariance_.setZero();
   }
   template <bool Dynamic = Size == Eigen::Dynamic>
   explicit IncrementalStatistics(int dimension, 
@@ -45,6 +50,8 @@ public:
       mean_(dimension), 
       covariance_(dimension, dimension) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
+    mean_.setZero();
+    covariance_.setZero();
   }
   template <bool Dynamic = Size == Eigen::Dynamic>
   explicit IncrementalStatistics(int dimension, Type discount, 
@@ -57,6 +64,8 @@ public:
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
     CHECK_GE(discount, 0.0) << "Discount must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount must be less than or equal to one.";
+    mean_.setZero();
+    covariance_.setZero();
   }
   virtual ~IncrementalStatistics() {}
   
@@ -91,7 +100,7 @@ public:
   
   void update(const Eigen::Matrix<Type, Size, 1>& point, Type weight) {
     
-    if (discount_ == 1.0) {
+    if (weight == 0.0) {
       return;
     }
     

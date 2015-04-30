@@ -48,7 +48,7 @@ public:
   inline bool isValid() const {
     return valid_;
   }
-  void evaluate(Type discount) {
+  void evalStatistics(Type discount) {
     
     CHECK_GE(discount, 0.0) << "Discount must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount must be less than or equal to one.";
@@ -65,12 +65,12 @@ public:
     
     // Compute covariance.
     covariance_.setZero();
-    Type sum = 0.0;
     for (int i = 0; i < sequence_.size(); ++i) {
       const Type weight = std::pow(1.0 - discount, sequence_.size() - 1 - i);
-      const Eigen::Matrix<Type, Size, 1> = sequence_[i].second - mean_;
-      covariance_ += weight * residual * residual.transpose();
-      sum += weight;
+      const Eigen::Matrix<Type, Size, 1> 
+          residual = sequence_[i].second - mean_;
+      covariance_ += weight * sequence_[i].first 
+          * residual * residual.transpose();
     }
     covariance_ /= sum;
     
@@ -94,7 +94,7 @@ private:
     std::normal_distribution<Type> noise_distribution(0.0, 1.0);
     
     std::mt19937 engine;
-    const std::random_device device;
+    std::random_device device;
     engine.seed(device());
     
     // Generate random scale and skewness parameters.
@@ -103,7 +103,7 @@ private:
     
     // Generate sequence.
     sequence_.reserve(length_);
-    Eigen::Matrix<Type, Size, 1> point(dimension);
+    Eigen::Matrix<Type, Size, 1> point(dimension_);
     for (int i = 0; i < length_; ++i) {
       const Type weight = weight_distribution(engine);
       for (int j = 0; j < dimension_; ++j) {
@@ -126,21 +126,31 @@ public:
   static constexpr int size = Statistics::size;
 protected:
   virtual void SetUp() {}
+  static const std::vector<int> lengths;
+  static const std::vector<typename Statistics::type> discounts;
   static constexpr typename Statistics::type tolerance = 1.0e-12;
 };
 
 template <class Statistics>
+const std::vector<int> 
+    IncrementalStatisticsTest<Statistics>::lengths = 
+        {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000};
+
+template <class Statistics>
+const std::vector<typename Statistics::type> 
+    IncrementalStatisticsTest<Statistics>::discounts = 
+        {0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
+
+template <class Statistics>
+constexpr typename Statistics::type 
+    IncrementalStatisticsTest<Statistics>::tolerance;
+
+template <class Statistics>
 class StaticIncrementalStatisticsTest : 
     public IncrementalStatisticsTest<Statistics> {
-  StaticIncrementalStatisticsTest {
-    static_assert(Statistics::size != Eigen::Dynamic);
-  }
+  static_assert(Statistics::size != Eigen::Dynamic, "");
 protected:
   static constexpr int dimension = Statistics::size;
-  static constexpr std::vector<int> 
-      lengths = {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000};
-  static constexpr std::vector<typename Statistics::type> 
-      discounts = {0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
 };
 
 typedef testing::Types<IncrementalStatistics<double, 1>, 
@@ -152,19 +162,23 @@ TYPED_TEST_CASE(StaticIncrementalStatisticsTest, StaticTypes);
 
 // Check that batch and incremental statistics are the same.
 TYPED_TEST(StaticIncrementalStatisticsTest, IsEqualToBatch) {
-  for (int length : lengths) {
+  const int dimension = this->dimension;
+  for (int length : this->lengths) {
     TestSequence<typename TypeParam::type, TypeParam::size> 
         sequence(dimension, length);
-    for (Type discount : discounts) {
-      sequence.evaluate(discount);
+    for (typename TypeParam::type discount : this->discounts) {
+      sequence.evalStatistics(discount);
       IncrementalStatistics<typename TypeParam::type, TypeParam::size> 
           statistics(discount);
+      ASSERT_EQ(statistics.getDimension(), dimension);
+      ASSERT_EQ(statistics.getDiscount(), discount);
       for (int i = 0; i < length; ++i) {
-        statistics.update(sequence.getWeight(i), sequence.getPoint(i));
+        statistics.update(sequence.getPoint(i), sequence.getWeight(i));
       }
-      EXPECT_LT((statistics.getMean() - sequence.getMean()).norm(), tolerance);
-      EXPECT_LT((statistics.getCovariance() - 
-          sequence.getCovariance()).norm(), tolerance);
+      EXPECT_LT((statistics.getMean() - sequence.getMean())
+          .array().abs().maxCoeff(), this->tolerance);
+      EXPECT_LT((statistics.getCovariance() - sequence.getCovariance())
+          .array().abs().maxCoeff(), this->tolerance);
     }   
   }
 }
@@ -172,9 +186,7 @@ TYPED_TEST(StaticIncrementalStatisticsTest, IsEqualToBatch) {
 template <class Statistics>
 class DynamicIncrementalStatisticsTest : 
     public IncrementalStatisticsTest<Statistics> {
-  DynamicIncrementalStatisticsTest {
-    static_assert(Statistics::size == Eigen::Dynamic);
-  }
+  static_assert(Statistics::size == Eigen::Dynamic, "");
 protected:
   const std::vector<int> dimensions = {1, 2, 5, 10};
 };
@@ -187,21 +199,23 @@ TYPED_TEST_CASE(DynamicIncrementalStatisticsTest, DynamicTypes);
 // Check that batch and incremental statistics are the same.
 TYPED_TEST(DynamicIncrementalStatisticsTest, IsEqualToBatch) {
   for (int dimension : this->dimensions) {
-    for (int length : lengths) {
+    for (int length : this->lengths) {
       TestSequence<typename TypeParam::type, TypeParam::size> 
           sequence(dimension, length);
-      for (Type discount : discounts) {
-        sequence.evaluate(discount);
+      for (typename TypeParam::type discount : this->discounts) {
+        sequence.evalStatistics(discount);
         IncrementalStatistics<typename TypeParam::type, TypeParam::size> 
             statistics(dimension, discount);
+        ASSERT_EQ(statistics.getDimension(), dimension);
+        ASSERT_EQ(statistics.getDiscount(), discount);
         for (int i = 0; i < length; ++i) {
-          statistics.update(sequence.getWeight(i), sequence.getPoint(i));
+          statistics.update(sequence.getPoint(i), sequence.getWeight(i));
         }
-        EXPECT_LT((statistics.getMean() - sequence.getMean()).norm(), 
-            tolerance);
-        EXPECT_LT((statistics.getCovariance() - 
-            sequence.getCovariance()).norm(), tolerance);
-      }   
+        EXPECT_LT((statistics.getMean() - sequence.getMean())
+            .array().abs().maxCoeff(), this->tolerance);
+        EXPECT_LT((statistics.getCovariance() - sequence.getCovariance())
+            .array().abs().maxCoeff(), this->tolerance);
+      }
     }
   }
 }
