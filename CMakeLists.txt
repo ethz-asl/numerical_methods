@@ -35,5 +35,14 @@ target_link_libraries(test_optimization_methods
   pthread
 )
 
+# Incremental statistics utility.
+catkin_add_gtest(test_incremental_statistics 
+  test/utility/test-incremental-statistics.cc
+)
+target_link_libraries(test_incremental_statistics 
+  ${PROJECT_NAME} 
+  pthread
+)
+
 cs_install()
 cs_export()
