@@ -216,8 +216,12 @@ class DynamicIncrementalStatisticsTest :
     public IncrementalStatisticsTest<Statistics> {
   static_assert(Statistics::size == Eigen::Dynamic, "");
 protected:
-  const std::vector<int> dimensions = {1, 2, 5, 10};
+  static const std::vector<int> dimensions;
 };
+
+template <class Statistics>
+const std::vector<int> 
+    DynamicIncrementalStatisticsTest<Statistics>::dimensions = {1, 2, 5, 10};
 
 typedef testing::Types<IncrementalStatistics<double, Eigen::Dynamic>> 
     DynamicTypes;
