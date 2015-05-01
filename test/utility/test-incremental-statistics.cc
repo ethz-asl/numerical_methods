@@ -1,4 +1,5 @@
 #include <cmath>
+#include <limits>
 #include <random>
 #include <utility>
 #include <vector>
@@ -16,8 +17,7 @@ template <typename Type, int Size>
 class TestSequence {
 public:
   explicit TestSequence(int dimension, int length) : dimension_(dimension), 
-      length_(length), mean_(dimension), covariance_(dimension, dimension), 
-      valid_(false) {
+      length_(length) {
     if (Size != Eigen::Dynamic) {
       CHECK_EQ(dimension, Size) << "Dimension must be consistent.";
     } else {
@@ -29,63 +29,55 @@ public:
   inline int getDimension() const {
     return dimension_;
   }
+  inline int getLength() const {
+    return length_;
+  }
   inline Type getWeight(std::size_t i) const {
     CHECK_LT(i, length_);
-    return sequence_[i].first;
+    return weights_(i);
   }
-  inline const Eigen::Matrix<Type, Size, 1>& getPoint(std::size_t i) const {
+  inline Eigen::Matrix<Type, Size, 1> getPoint(std::size_t i) const {
     CHECK_LT(i, length_);
-    return sequence_[i].second;
+    return values_.col(i);
   }
-  inline const Eigen::Matrix<Type, Size, 1>& getMean() const {
-    CHECK(valid_);
-    return mean_;
-  }
-  inline const Eigen::Matrix<Type, Size, Size>& getCovariance() const {
-    CHECK(valid_);
-    return covariance_;
-  }
-  inline bool isValid() const {
-    return valid_;
-  }
-  void evalStatistics(Type discount) {
+  std::pair<Eigen::Matrix<Type, Size, 1>, Eigen::Matrix<Type, Size, Size>> 
+      evalStatistics(Type discount) {
     
     CHECK_GE(discount, 0.0) << "Discount must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount must be less than or equal to one.";
     
+    Eigen::Matrix<Type, Size, 1> mean(dimension_);
+    Eigen::Matrix<Type, Size, Size> covariance(dimension_, dimension_);
+    
     // Compute mean.
-    mean_.setZero();
+    mean.setZero();
     Type sum = 0.0;
-    for (int i = 0; i < sequence_.size(); ++i) {
-      const Type weight = std::pow(1.0 - discount, sequence_.size() - 1 - i);
-      mean_ += weight * sequence_[i].first * sequence_[i].second;
+    for (int i = 0; i < length_; ++i) {
+      const Type 
+          weight = weights_(i) * std::pow(1.0 - discount, length_ - 1 - i);
+      mean += weight * values_.col(i);
       sum += weight;
     }
-    mean_ /= sum;
+    mean /= sum;
     
     // Compute covariance.
-    covariance_.setZero();
-    for (int i = 0; i < sequence_.size(); ++i) {
-      const Type weight = std::pow(1.0 - discount, sequence_.size() - 1 - i);
-      const Eigen::Matrix<Type, Size, 1> 
-          residual = sequence_[i].second - mean_;
-      covariance_ += weight * sequence_[i].first 
-          * residual * residual.transpose();
+    covariance.setZero();
+    for (int i = 0; i < length_; ++i) {
+      const Type 
+          weight = weights_(i) * std::pow(1.0 - discount, length_ - 1 - i);
+      const Eigen::Matrix<Type, Size, 1> residual = values_.col(i) - mean;
+      covariance += weight * residual * residual.transpose();
     }
-    covariance_ /= sum;
+    covariance /= sum;
     
-    discount_ = discount;
-    valid_ = true;
+    return std::make_pair(mean, covariance);
     
   }
 private:
-  int dimension_;
-  int length_;
-  Eigen::Matrix<Type, Size, 1> mean_;
-  Eigen::Matrix<Type, Size, Size> covariance_;
-  bool valid_;
-  Type discount_;
-  std::vector<std::pair<Type, Eigen::Matrix<Type, Size, 1>>> sequence_;
+  const int dimension_;
+  const int length_;
+  Eigen::Matrix<Type, Size, Eigen::Dynamic> values_;
+  Eigen::Matrix<Type, Eigen::Dynamic, 1> weights_;
   void generate() {
     
     std::uniform_real_distribution<Type> scale_distribution(1.0, 5.0);
@@ -101,11 +93,13 @@ private:
     const Type scale = scale_distribution(engine);
     const Type skewness = skewness_distribution(engine);
     
-    // Generate sequence.
-    sequence_.reserve(length_);
+    values_.resize(dimension_, length_);
+    weights_.resize(length_);
+    
+    // Generate sequence from stochastic process.
     Eigen::Matrix<Type, Size, 1> point(dimension_);
+    point.setZero();
     for (int i = 0; i < length_; ++i) {
-      const Type weight = weight_distribution(engine);
       for (int j = 0; j < dimension_; ++j) {
         Type noise = scale * noise_distribution(engine);
         if (scale * noise_distribution(engine) > skewness * noise) {
@@ -113,7 +107,9 @@ private:
         }
         point(j) += noise;
       }
-      sequence_.push_back(std::make_pair(weight, point));
+      values_.col(i) = point;
+      const Type weight = weight_distribution(engine);
+      weights_(i) = weight;
     }
     
   }
@@ -128,7 +124,8 @@ protected:
   virtual void SetUp() {}
   static const std::vector<int> lengths;
   static const std::vector<typename Statistics::type> discounts;
-  static constexpr typename Statistics::type tolerance = 1.0e-12;
+  static constexpr typename Statistics::type tolerance = 
+      std::sqrt(std::numeric_limits<typename Statistics::type>::epsilon());
 };
 
 template <class Statistics>
@@ -164,22 +161,53 @@ TYPED_TEST_CASE(StaticIncrementalStatisticsTest, StaticTypes);
 TYPED_TEST(StaticIncrementalStatisticsTest, IsEqualToBatch) {
   const int dimension = this->dimension;
   for (int length : this->lengths) {
-    TestSequence<typename TypeParam::type, TypeParam::size> 
-        sequence(dimension, length);
-    for (typename TypeParam::type discount : this->discounts) {
-      sequence.evalStatistics(discount);
-      IncrementalStatistics<typename TypeParam::type, TypeParam::size> 
-          statistics(discount);
+    
+    using Type = typename TypeParam::type;
+    const int Size = TypeParam::size;
+    
+    // Create test sequence.
+    TestSequence<Type, Size> sequence(dimension, length);
+    
+    ASSERT_EQ(sequence.getDimension(), dimension);
+    ASSERT_EQ(sequence.getLength(), length);
+    
+    for (Type discount : this->discounts) {
+      
+      // Compute batch statistics.
+      const std::pair<Eigen::Matrix<Type, Size, 1>, 
+          Eigen::Matrix<Type, Size, Size>> 
+              summary = sequence.evalStatistics(discount);
+      
+      const Eigen::Matrix<Type, Size, 1> mean = summary.first;
+      const Eigen::Matrix<Type, Size, Size> covariance = summary.second;
+      
+      IncrementalStatistics<Type, Size> statistics(discount);
+      
       ASSERT_EQ(statistics.getDimension(), dimension);
       ASSERT_EQ(statistics.getDiscount(), discount);
+      
+      // Check dimensions.
+      ASSERT_EQ(statistics.getMean().rows(), dimension);
+      ASSERT_EQ(statistics.getMean().cols(), 1);
+      ASSERT_EQ(statistics.getCovariance().rows(), dimension);
+      ASSERT_EQ(statistics.getCovariance().cols(), dimension);
+      
+      EXPECT_EQ(statistics.getMean().array().abs().maxCoeff(), 0.0);
+      EXPECT_EQ(statistics.getCovariance().array().abs().maxCoeff(), 0.0);
+      
+      // Compute incremental statistics.
       for (int i = 0; i < length; ++i) {
         statistics.update(sequence.getPoint(i), sequence.getWeight(i));
       }
-      EXPECT_LT((statistics.getMean() - sequence.getMean())
+      
+      // Batch and incremental statistics should match.
+      EXPECT_LT((statistics.getMean() - mean)
           .array().abs().maxCoeff(), this->tolerance);
-      EXPECT_LT((statistics.getCovariance() - sequence.getCovariance())
+      EXPECT_LT((statistics.getCovariance() - covariance)
           .array().abs().maxCoeff(), this->tolerance);
-    }   
+      
+    }
+    
   }
 }
 
@@ -200,22 +228,53 @@ TYPED_TEST_CASE(DynamicIncrementalStatisticsTest, DynamicTypes);
 TYPED_TEST(DynamicIncrementalStatisticsTest, IsEqualToBatch) {
   for (int dimension : this->dimensions) {
     for (int length : this->lengths) {
-      TestSequence<typename TypeParam::type, TypeParam::size> 
-          sequence(dimension, length);
-      for (typename TypeParam::type discount : this->discounts) {
-        sequence.evalStatistics(discount);
-        IncrementalStatistics<typename TypeParam::type, TypeParam::size> 
-            statistics(dimension, discount);
+      
+      using Type = typename TypeParam::type;
+      const int Size = TypeParam::size;
+      
+      // Create test sequence.
+      TestSequence<Type, Size> sequence(dimension, length);
+      
+      ASSERT_EQ(sequence.getDimension(), dimension);
+      ASSERT_EQ(sequence.getLength(), length);
+      
+      for (Type discount : this->discounts) {
+        
+        // Compute batch statistics.
+        const std::pair<Eigen::Matrix<Type, Size, 1>, 
+            Eigen::Matrix<Type, Size, Size>> 
+                summary = sequence.evalStatistics(discount);
+        
+        const Eigen::Matrix<Type, Size, 1> mean = summary.first;
+        const Eigen::Matrix<Type, Size, Size> covariance = summary.second;
+        
+        IncrementalStatistics<Type, Size> statistics(dimension, discount);
+        
         ASSERT_EQ(statistics.getDimension(), dimension);
         ASSERT_EQ(statistics.getDiscount(), discount);
+        
+        // Check dimensions.
+        ASSERT_EQ(statistics.getMean().rows(), dimension);
+        ASSERT_EQ(statistics.getMean().cols(), 1);
+        ASSERT_EQ(statistics.getCovariance().rows(), dimension);
+        ASSERT_EQ(statistics.getCovariance().cols(), dimension);
+        
+        EXPECT_EQ(statistics.getMean().array().abs().maxCoeff(), 0.0);
+        EXPECT_EQ(statistics.getCovariance().array().abs().maxCoeff(), 0.0);
+        
+        // Compute incremental statistics.
         for (int i = 0; i < length; ++i) {
           statistics.update(sequence.getPoint(i), sequence.getWeight(i));
         }
-        EXPECT_LT((statistics.getMean() - sequence.getMean())
+        
+        // Batch and incremental statistics should match.
+        EXPECT_LT((statistics.getMean() - mean)
             .array().abs().maxCoeff(), this->tolerance);
-        EXPECT_LT((statistics.getCovariance() - sequence.getCovariance())
+        EXPECT_LT((statistics.getCovariance() - covariance)
             .array().abs().maxCoeff(), this->tolerance);
+        
       }
+      
     }
   }
 }
