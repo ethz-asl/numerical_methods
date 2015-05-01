@@ -11,16 +11,11 @@
 
 namespace numerical_methods {
 
-// Suite of test problems for function minimization methods, based on 
-// Surjanovic and Bingham (2013).
-// 
-// S. Surjanovic and D. Bingham, "Virtual Library of Simulation Experiments - 
-// Test Functions and Datasets: Optimization Test Problems," available online 
-// at http://www.sfu.ca/~ssurjano/optimization.html [accessed on April, 2015], 
-// Simon Fraser University (2013).
+// Suite of test problems for optimization methods.
 template <typename Type, int Size>
 class TestSuite {
 public:
+  
   TestSuite(int dimension, Type tolerance) : dimension_(dimension), 
       tolerance_(tolerance) {
     if (Size != Eigen::Dynamic) {
@@ -31,9 +26,17 @@ public:
     CHECK_GE(tolerance, 0.0) << "Tolerance must be non-negative.";
     initialize();
   }
-  class Problem {
+  
+  inline int getDimension() const {
+    return dimension_;
+  }
+  inline Type getTolerance() const {
+    return tolerance_;
+  }
+  
+  class TestProblem {
   public:
-    Problem(int dimension, 
+    TestProblem(int dimension, 
         const std::function<Type(const Eigen::Matrix<Type, Size, 1>&)>& 
             function, 
         const Eigen::Matrix<Type, Size, 1>& init_guess, 
@@ -73,17 +76,29 @@ public:
     const Eigen::Matrix<Type, Size, 1> glob_minimum_;
     const Type param_tolerance_;
   };
+  
   std::size_t getNumProblems() const {
     return problems_.size();
   }
-  const Problem& getProblem(std::size_t i) const {
+  const TestProblem& getProblem(std::size_t i) const {
     CHECK_LT(i, problems_.size());
     return problems_[i];
   }
+  
 private:
-  int dimension_;
-  Type tolerance_;
-  std::vector<Problem> problems_;
+  
+  const int dimension_;
+  const Type tolerance_;
+  
+  std::vector<TestProblem> problems_;
+  
+  // Create suite of function minimization test problems. Based on Surjanovic 
+  // and Bingham (2013).
+  // 
+  // S. Surjanovic and D. Bingham, "Virtual Library of Simulation Experiments 
+  // - Test Functions and Datasets: Optimization Test Problems," available 
+  // online at http://www.sfu.ca/~ssurjano/optimization.html [accessed on 
+  // April, 2015], Simon Fraser University (2013).
   void initialize() {
     
     std::function<Type(const Eigen::Matrix<Type, Size, 1>&)> function;
@@ -101,7 +116,7 @@ private:
     };
     init_guess.fill(- 1.0);
     glob_minimum.setOnes();
-    problems_.push_back(Problem(dimension_, function, init_guess, 
+    problems_.push_back(TestProblem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
     // Rotated ellipsoid function in S. Surjanovic and D. Bingham (2013).
@@ -118,7 +133,7 @@ private:
       init_guess(i) = std::pow(- 1.0, i);
     }
     glob_minimum.setZero();
-    problems_.push_back(Problem(dimension_, function, init_guess, 
+    problems_.push_back(TestProblem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
     // Sum-of-powers function in S. Surjanovic and D. Bingham (2013).
@@ -131,7 +146,7 @@ private:
     };
     init_guess.setOnes();
     glob_minimum.setZero();
-    problems_.push_back(Problem(dimension_, function, init_guess, 
+    problems_.push_back(TestProblem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
     // Zakharov function in S. Surjanovic and D. Bingham (2013).
@@ -151,7 +166,7 @@ private:
       init_guess(i) = std::pow(- 1.0, i + 1);
     }
     glob_minimum.setZero();
-    problems_.push_back(Problem(dimension_, function, init_guess, 
+    problems_.push_back(TestProblem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
     // Dixon-Price function in S. Surjanovic and D. Bingham (2013).
@@ -167,7 +182,7 @@ private:
     for (int i = 0; i < dimension_; ++i) {
       glob_minimum(i) = std::pow(2.0, 1.0 / std::pow(2.0, i) - 1.0);
     }
-    problems_.push_back(Problem(dimension_, function, init_guess, 
+    problems_.push_back(TestProblem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
     // Styblinski-Tang function in S. Surjanovic and D. Bingham (2013).
@@ -181,10 +196,11 @@ private:
     };
     init_guess.fill(- 1.0);
     glob_minimum.fill(- 2.9035);
-    problems_.push_back(Problem(dimension_, function, init_guess, 
+    problems_.push_back(TestProblem(dimension_, function, init_guess, 
         glob_minimum, tolerance_));
     
   }
+  
 };
 
 template <class Method>
@@ -194,18 +210,36 @@ public:
   static constexpr int size = Method::size;
 protected:
   virtual void SetUp() {}
-  const std::vector<int> dimensions = {2, 3, 4, 5};
-  const typename Method::type tolerance = 1.0e-2;
-  const typename Method::type min_iterations = 10;
-  const typename Method::type max_iterations = 2000;
-  const typename Method::type param_tolerance = 1.0e-9;
-  const typename Method::type func_tolerance = 1.0e-6;
+  static const std::vector<int> dimensions;
+  static constexpr typename Method::type tolerance = 1.0e-2;
+  static constexpr typename Method::type min_iterations = 10;
+  static constexpr typename Method::type max_iterations = 2000;
+  static constexpr typename Method::type param_tolerance = 1.0e-9;
+  static constexpr typename Method::type func_tolerance = 1.0e-6;
 };
 
 template <class Method>
+const std::vector<int> 
+    OptimizationMethodTest<Method>::dimensions = {2, 3, 4, 5};
+
+template <class Method>
+constexpr typename Method::type OptimizationMethodTest<Method>::tolerance;
+template <class Method>
+constexpr typename Method::type OptimizationMethodTest<Method>::min_iterations;
+template <class Method>
+constexpr typename Method::type OptimizationMethodTest<Method>::max_iterations;
+template <class Method>
+constexpr typename Method::type 
+    OptimizationMethodTest<Method>::param_tolerance;
+template <class Method>
+constexpr typename Method::type 
+    OptimizationMethodTest<Method>::func_tolerance;
+
+template <class Method>
 class StaticOptimizationMethodTest : public OptimizationMethodTest<Method> {
+  static_assert(Method::size != Eigen::Dynamic, "");
 protected:
-  const int dimension = Method::size;
+  static constexpr int dimension = Method::size;
 };
 
 typedef testing::Types<NelderMeadMethod<double, 2>, 
@@ -217,29 +251,55 @@ TYPED_TEST_CASE(StaticOptimizationMethodTest, StaticTypes);
 
 // Check that integration method achieves desired error.
 TYPED_TEST(StaticOptimizationMethodTest, FindsMinimum) {
-  TestSuite<typename TypeParam::type, TypeParam::size> 
-      test_suite(this->dimension, this->tolerance);
-  for (std::size_t i = 0; i < test_suite.getNumProblems(); ++i) {
-    const typename TestSuite<typename TypeParam::type, 
-        TypeParam::size>::Problem& problem = test_suite.getProblem(i);
+  
+  using Type = typename TypeParam::type;
+  const int Size = TypeParam::size;
+  
+  const int dimension = this->dimension;
+  const Type tolerance = this->tolerance;
+  
+  // Create test suite.
+  TestSuite<Type, Size> suite(dimension, tolerance);
+  
+  ASSERT_EQ(suite.getDimension(), dimension);
+  ASSERT_EQ(suite.getTolerance(), tolerance);
+  
+  for (std::size_t i = 0; i < suite.getNumProblems(); ++i) {
+    
+    const typename TestSuite<Type, Size>::TestProblem& 
+        problem = suite.getProblem(i);
+    
     TypeParam method;
+    
+    // Set optimization options.
     method.options.setMinIterations(this->min_iterations);
     method.options.setMaxIterations(this->max_iterations);
     method.options.setParamTolerance(this->param_tolerance);
     method.options.setFuncTolerance(this->func_tolerance);
-    const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
+    
+    // Solve problem.
+    const Eigen::Matrix<Type, Size, 1> 
         glob_minimum = method.minimize(problem.getFunction(), 
                                        problem.getInitGuess());
-    EXPECT_LT((glob_minimum - problem.getGlobMinimum()).norm(), 
-        problem.getParamTolerance());
+    
+    // Minimum should be close to solution.
+    EXPECT_LT((glob_minimum - problem.getGlobMinimum())
+        .array().abs().maxCoeff(), problem.getParamTolerance());
+    
   }
+  
 }
 
 template <class Method>
 class DynamicOptimizationMethodTest : public OptimizationMethodTest<Method> {
+  static_assert(Method::size == Eigen::Dynamic, "");
 protected:
-  const std::vector<int> dimensions = {2, 3, 4, 5};
+  static const std::vector<int> dimensions;
 };
+
+template <class Method>
+const std::vector<int> 
+    DynamicOptimizationMethodTest<Method>::dimensions = {2, 3, 4, 5};
 
 typedef testing::Types<NelderMeadMethod<double, Eigen::Dynamic>> DynamicTypes;
 
@@ -248,22 +308,41 @@ TYPED_TEST_CASE(DynamicOptimizationMethodTest, DynamicTypes);
 // Check that integration method achieves desired error.
 TYPED_TEST(DynamicOptimizationMethodTest, FindsMinimum) {
   for (int dimension : this->dimensions) {
-    TestSuite<typename TypeParam::type, TypeParam::size> 
-        test_suite(dimension, this->tolerance);
-    for (std::size_t i = 0; i < test_suite.getNumProblems(); ++i) {
-      const typename TestSuite<typename TypeParam::type, 
-          TypeParam::size>::Problem& problem = test_suite.getProblem(i);
+    
+    using Type = typename TypeParam::type;
+    const int Size = TypeParam::size;
+    
+    const Type tolerance = this->tolerance;
+    
+    // Create test suite.
+    TestSuite<Type, Size> suite(dimension, tolerance);
+    
+    ASSERT_EQ(suite.getDimension(), dimension);
+    ASSERT_EQ(suite.getTolerance(), tolerance);
+    
+    for (std::size_t i = 0; i < suite.getNumProblems(); ++i) {
+      
+      const typename TestSuite<Type, Size>::TestProblem& 
+          problem = suite.getProblem(i);
+      
       TypeParam method(problem.getDimension());
+      
+      // Set optimization options.
       method.options.setMinIterations(this->min_iterations);
       method.options.setMaxIterations(this->max_iterations);
       method.options.setParamTolerance(this->param_tolerance);
       method.options.setFuncTolerance(this->func_tolerance);
-      const Eigen::Matrix<typename TypeParam::type, TypeParam::size, 1> 
+      
+      // Solve problem.
+      const Eigen::Matrix<Type, Size, 1> 
           glob_minimum = method.minimize(problem.getFunction(), 
                                          problem.getInitGuess());
-      EXPECT_LT((glob_minimum - problem.getGlobMinimum()).norm(), 
-          problem.getParamTolerance());
+      
+      EXPECT_LT((glob_minimum - problem.getGlobMinimum())
+          .array().abs().maxCoeff(), problem.getParamTolerance());
+      
     }
+    
   }
 }
 
