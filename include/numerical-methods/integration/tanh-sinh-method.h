@@ -31,12 +31,11 @@ public:
     initNodes();
   }
   
-  // Return order.
   inline int getOrder() const {
     return order_;
   }
   
-  // Integrate function over given interval.
+  // Integrate a function over a given interval.
   template <class Function>
   Type integrate(const Function& function, Type a, Type b) const {
     

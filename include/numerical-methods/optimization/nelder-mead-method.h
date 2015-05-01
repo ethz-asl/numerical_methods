@@ -49,6 +49,7 @@ public:
       typename std::enable_if<Dynamic>::type* = nullptr) : 
       OptimizationMethod<Type, Size>(dimension) {}
   
+  // Search for the minimum of a function from a given initial guess.
   template <class Function>
   Eigen::Matrix<Type, Size, 1> minimize(const Function& function, 
       const Eigen::Matrix<Type, Size, 1>& point) const {
