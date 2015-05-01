@@ -10,6 +10,8 @@
 
 namespace numerical_methods {
 
+// This class computes the mean and covariance of a set of data in an 
+// incremental fashion, with special attention to numerical stability.
 template <typename Type, int Size>
 class IncrementalStatistics {
 public:
@@ -36,8 +38,8 @@ public:
       weight_(0.0), 
       mean_(Size), 
       covariance_(Size, Size) {
-    CHECK_GE(discount, 0.0) << "Discount must be non-negative.";
-    CHECK_LE(discount, 1.0) << "Discount must be less than or equal to one.";
+    CHECK_GE(discount, 0.0) << "Discount factor must be non-negative.";
+    CHECK_LE(discount, 1.0) << "Discount factor must not exceed one.";
     mean_.setZero();
     covariance_.setZero();
   }
@@ -62,14 +64,13 @@ public:
       mean_(dimension), 
       covariance_(dimension, dimension) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
-    CHECK_GE(discount, 0.0) << "Discount must be non-negative.";
-    CHECK_LE(discount, 1.0) << "Discount must be less than or equal to one.";
+    CHECK_GE(discount, 0.0) << "Discount factor must be non-negative.";
+    CHECK_LE(discount, 1.0) << "Discount factor must not exceed one.";
     mean_.setZero();
     covariance_.setZero();
   }
   virtual ~IncrementalStatistics() {}
   
-  // Return dimension or discount.
   inline int getDimension() const {
     return dimension_;
   }
@@ -83,7 +84,6 @@ public:
   inline const Eigen::Matrix<Type, Size, Size>& getCovariance() const {
     return covariance_;
   }
-  
   inline void setMean(const Eigen::Matrix<Type, Size, 1>& mean) {
     mean_ = mean;
   }
@@ -91,31 +91,27 @@ public:
     covariance_ = covariance;
   }
   
-  // Reset statistics.
+  // Reset the statistics.
   void clear() {
     weight_ = 0.0;
     mean_.setZero();
     covariance_.setZero();
   }
   
+  // Incrementally update the statistics as new data become available.
   void update(const Eigen::Matrix<Type, Size, 1>& point, Type weight) {
-    
     if (weight == 0.0) {
       return;
     }
-    
     weight_ = (1.0 - discount_) * weight_ + weight;
     weight /= weight_;
-    
     const Eigen::Matrix<Type, Size, 1> residual = point - mean_;
-    
-    // Update sufficient statistics.
     mean_ += weight * residual;
     covariance_ = (1.0 - weight) * (covariance_ + 
         weight * (residual * residual.transpose()));
-    
   }
   
+  // Incrementally update the statistics with a default weight.
   void update(const Eigen::Matrix<Type, Size, 1>& point) {
     update(point, 1.0);
   }
@@ -127,7 +123,6 @@ private:
   
   Type weight_;
   
-  // Statistics.
   Eigen::Matrix<Type, Size, 1> mean_;
   Eigen::Matrix<Type, Size, Size> covariance_;
   
