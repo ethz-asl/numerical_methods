@@ -37,7 +37,7 @@ target_link_libraries(test_optimization_methods
 
 # Incremental statistics utility.
 catkin_add_gtest(test_incremental_statistics 
-  test/utility/test-incremental-statistics.cc
+  test/test-incremental-statistics.cc
 )
 target_link_libraries(test_incremental_statistics 
   ${PROJECT_NAME} 
