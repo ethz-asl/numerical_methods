@@ -40,12 +40,12 @@ public:
     initNodes();
   }
   
-  // Return order.
   inline int getOrder() const {
     return order_;
   }
   
-  // Integrate function over given interval.
+  // Compute the natural logarithm of the integral of the exponential of a 
+  // function a over given interval.
   template <class Function>
   Type integrate(const Function& function, Type a, Type b) const {
     

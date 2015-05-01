@@ -9,11 +9,15 @@
 
 namespace numerical_methods {
 
+// Problem for testing integration methods.
 template <typename Type>
-struct Problem {
-Problem(const std::function<Type(Type)>& function, Type a, Type b, Type value, 
-    Type tolerance) : function(function), a(a), b(b), value(value), 
-    tolerance(tolerance) {};
+struct TestProblem {
+TestProblem(const std::function<Type(Type)>& function, Type a, Type b, 
+    Type value, Type tolerance) : function(function), a(a), b(b), 
+    value(value), tolerance(tolerance) {
+  CHECK_LT(a, b) << "Integration interval must be non-empty.";
+  CHECK_GE(tolerance, 0.0) << "Tolerance must be non-negative.";
+}
 typedef Type type;
 const std::function<Type(Type)> function;
 const Type a, b;
@@ -38,8 +42,8 @@ const Type tolerance;
 // precision Quadrature Schemes," in Experimental Mathematics, vol. 14, no. 4, 
 // pp. 317-329 (2005).
 template <typename Type>
-std::vector<Problem<Type>> defProblems() {
-  std::vector<Problem<Type>> problems;
+std::vector<TestProblem<Type>> createTestProblems() {
+  std::vector<TestProblem<Type>> problems;
   {
     
     // Test problem 1 (category a.) of Bailey et al. (2005).
@@ -49,7 +53,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = 1.0 / 4.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -64,7 +68,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type value = (getPi<Type>() - 2.0 
         + 2.0 * std::log(2.0)) / 12.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -77,7 +81,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = getPi<Type>() / 2.0;
     const Type value = (std::exp(getPi<Type>() / 2.0) - 1.0) / 2.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -92,7 +96,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1;
     const Type value = 5.0 * std::pow(getPi<Type>(), 2) / 96.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -106,7 +110,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1;
     const Type value = - 4.0 / 9.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -119,7 +123,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1;
     const Type value = getPi<Type>() / 4.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -134,7 +138,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type value = 2.0 * std::sqrt(getPi<Type>()) * 
         std::tgamma(3.0 / 4.0) / std::tgamma(1.0 / 4.0);
     const Type tolerance = 1.0e-3;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -148,7 +152,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1;
     const Type value = 2.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -162,7 +166,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = getPi<Type>() / 2.0;
     const Type value = - getPi<Type>() * std::log(2.0) / 2.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -176,7 +180,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = getPi<Type>() / 2.0;
     const Type value = getPi<Type>() * std::sqrt(2.0) / 2.0;
     const Type tolerance = 1.0e-3;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -189,7 +193,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = getPi<Type>() / 2.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -202,7 +206,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = std::sqrt(getPi<Type>());
     const Type tolerance = 1.0e-3;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -215,7 +219,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = std::sqrt(getPi<Type>() / 2.0);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -223,12 +227,13 @@ std::vector<Problem<Type>> defProblems() {
     
     // Test problem 14 (category e.) of Bailey et al. (2005).
     const std::function<Type(Type)> function = [](Type x) -> Type {
-      return std::exp(1.0 - 1.0 / x) * std::cos(1.0 / x - 1.0) / std::pow(x, 2);
+      return std::exp(1.0 - 1.0 / x) * std::cos(1.0 / x - 1.0) 
+          / std::pow(x, 2);
     };
     const Type a = 0.0, b = 1.0;
     const Type value = 1.0 / 2.0;
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -240,26 +245,31 @@ class IntegrationMethodTest : public testing::Test {
 public:
   typedef typename Method::type type;
 protected:
-  virtual void SetUp() {
-    problems = defProblems<typename Method::type>();
-  }
-  std::vector<Problem<typename Method::type>> problems;
-  const std::vector<typename Method::type> 
-      errors = {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
+  virtual void SetUp() {}
+  static const std::vector<TestProblem<typename Method::type>> problems;
+  static const std::vector<typename Method::type> errors;
 };
 
-// TODO(gabrieag): Find out why test fails with quadruple-precision.
+template <class Method>
+const std::vector<TestProblem<typename Method::type>> 
+    IntegrationMethodTest<Method>::problems = 
+        createTestProblems<typename Method::type>();
+
+template <class Method>
+const std::vector<typename Method::type> 
+    IntegrationMethodTest<Method>::errors = {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
+
 typedef testing::Types<TanhSinhMethod<double>> Types;
 
 TYPED_TEST_CASE(IntegrationMethodTest, Types);
 
 // Check that integration method achieves desired error.
 TYPED_TEST(IntegrationMethodTest, AchievesDesiredError) {
-  for (typename TypeParam::type error : this->errors) {
+  using Type = typename TypeParam::type;
+  for (Type error : this->errors) {
     TypeParam method(error);
-    for (const Problem<typename TypeParam::type>& problem : this->problems) {
-      typename TypeParam::type value = method.integrate(problem.function, 
-          problem.a, problem.b);
+    for (const TestProblem<Type>& problem : this->problems) {
+      Type value = method.integrate(problem.function, problem.a, problem.b);
       EXPECT_LT(std::abs(value - problem.value), error + problem.tolerance);
     }
   }

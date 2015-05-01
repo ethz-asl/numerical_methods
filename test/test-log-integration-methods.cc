@@ -9,11 +9,15 @@
 
 namespace numerical_methods {
 
+// Problem for testing integration methods.
 template <typename Type>
-struct Problem {
-Problem(const std::function<Type(Type)>& function, Type a, Type b, Type value, 
-    Type tolerance) : function(function), a(a), b(b), value(value), 
-    tolerance(tolerance) {};
+struct TestProblem {
+TestProblem(const std::function<Type(Type)>& function, Type a, Type b, 
+    Type value, Type tolerance) : function(function), a(a), b(b), 
+    value(value), tolerance(tolerance) {
+  CHECK_LT(a, b) << "Integration interval must be non-empty.";
+  CHECK_GE(tolerance, 0.0) << "Tolerance must be non-negative.";
+}
 typedef Type type;
 const std::function<Type(Type)> function;
 const Type a, b;
@@ -21,9 +25,11 @@ const Type value;
 const Type tolerance;
 };
 
+// Create suite of log-integration test problems. Problems consist of 
+// computing log-normalization constant of known probability density function.
 template <typename Type>
-std::vector<Problem<Type>> defProblems() {
-  std::vector<Problem<Type>> problems;
+std::vector<TestProblem<Type>> createTestProblems() {
+  std::vector<TestProblem<Type>> problems;
   {
     
     // Log-normalization constant of uniform distribution.
@@ -34,7 +40,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = alpha, b = beta;
     const Type value = std::log(beta - alpha);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -51,7 +57,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type value = std::lgamma(alpha) + std::lgamma(beta) 
         - std::lgamma(alpha + beta);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -68,7 +74,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = std::log(2.0 * getPi<Type>()) / 2.0 + std::log(sigma);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -84,7 +90,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = - rho, b = rho;
     const Type value = std::log(getPi<Type>() / 2.0) + 2.0 * std::log(rho);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -100,7 +106,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = mu - sigma / 2.0, b = mu + sigma / 2.0;
     const Type value = std::log(sigma);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -117,7 +123,7 @@ std::vector<Problem<Type>> defProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = - std::log(alpha) - std::log(beta);
     const Type tolerance = 0.0;
-    Problem<Type> problem(function, a, b, value, tolerance);
+    TestProblem<Type> problem(function, a, b, value, tolerance);
     problems.push_back(problem);
     
   }
@@ -125,30 +131,36 @@ std::vector<Problem<Type>> defProblems() {
 }
 
 template <class Method>
-class IntegrationMethodTest : public testing::Test {
+class LogIntegrationMethodTest : public testing::Test {
 public:
   typedef typename Method::type type;
 protected:
-  virtual void SetUp() {
-    problems = defProblems<typename Method::type>();
-  }
-  std::vector<Problem<typename Method::type>> problems;
-  const std::vector<typename Method::type> 
-      errors = {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
+  virtual void SetUp() {}
+  static const std::vector<TestProblem<typename Method::type>> problems;
+  static const std::vector<typename Method::type> errors;
 };
 
-// TODO(gabrieag): Find out why test fails with quadruple-precision.
+template <class Method>
+const std::vector<TestProblem<typename Method::type>> 
+    LogIntegrationMethodTest<Method>::problems = 
+        createTestProblems<typename Method::type>();
+
+template <class Method>
+const std::vector<typename Method::type> 
+    LogIntegrationMethodTest<Method>::errors = 
+        {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
+
 typedef testing::Types<LogTanhSinhMethod<double>> Types;
 
-TYPED_TEST_CASE(IntegrationMethodTest, Types);
+TYPED_TEST_CASE(LogIntegrationMethodTest, Types);
 
 // Check that integration method achieves desired error.
-TYPED_TEST(IntegrationMethodTest, AchievesDesiredError) {
-  for (typename TypeParam::type error : this->errors) {
+TYPED_TEST(LogIntegrationMethodTest, AchievesDesiredError) {
+  using Type = typename TypeParam::type;
+  for (Type error : this->errors) {
     TypeParam method(error);
-    for (const Problem<typename TypeParam::type>& problem : this->problems) {
-      typename TypeParam::type value = method.integrate(problem.function, 
-          problem.a, problem.b);
+    for (const TestProblem<Type>& problem : this->problems) {
+      Type value = method.integrate(problem.function, problem.a, problem.b);
       EXPECT_LT(std::abs(value - problem.value), error + problem.tolerance);
     }
   }
