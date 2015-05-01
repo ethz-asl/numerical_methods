@@ -124,8 +124,7 @@ protected:
   virtual void SetUp() {}
   static const std::vector<int> lengths;
   static const std::vector<typename Statistics::type> discounts;
-  static constexpr typename Statistics::type tolerance = 
-      std::sqrt(std::numeric_limits<typename Statistics::type>::epsilon());
+  static const typename Statistics::type tolerance;
 };
 
 template <class Statistics>
@@ -139,8 +138,9 @@ const std::vector<typename Statistics::type>
         {0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
 
 template <class Statistics>
-constexpr typename Statistics::type 
-    IncrementalStatisticsTest<Statistics>::tolerance;
+const typename Statistics::type 
+    IncrementalStatisticsTest<Statistics>::tolerance = 
+        std::sqrt(std::numeric_limits<typename Statistics::type>::epsilon());
 
 template <class Statistics>
 class StaticIncrementalStatisticsTest : 
