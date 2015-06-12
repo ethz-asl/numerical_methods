@@ -13,16 +13,16 @@ namespace numerical_methods {
 template <typename Type>
 struct TestProblem {
 TestProblem(const std::function<Type(Type)>& function, Type a, Type b, 
-    Type value, Type tolerance) : function(function), a(a), b(b), 
-    value(value), tolerance(tolerance) {
+    Type value, Type margin) : function(function), a(a), b(b), 
+    value(value), margin(margin) {
   CHECK_LT(a, b) << "Integration interval must be non-empty.";
-  CHECK_GE(tolerance, 0.0) << "Tolerance must be non-negative.";
+  CHECK_GE(margin, 0.0) << "Margin must be non-negative.";
 }
 typedef Type type;
 const std::function<Type(Type)> function;
 const Type a, b;
 const Type value;
-const Type tolerance;
+const Type margin;
 };
 
 // Create suite of integration test problems, with five categories:
@@ -52,8 +52,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1.0;
     const Type value = 1.0 / 4.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -67,8 +67,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     const Type a = 0.0, b = 1.0;
     const Type value = (getPi<Type>() - 2.0 
         + 2.0 * std::log(2.0)) / 12.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -80,8 +80,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = getPi<Type>() / 2.0;
     const Type value = (std::exp(getPi<Type>() / 2.0) - 1.0) / 2.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -95,8 +95,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1;
     const Type value = 5.0 * std::pow(getPi<Type>(), 2) / 96.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -109,8 +109,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1;
     const Type value = - 4.0 / 9.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -122,8 +122,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1;
     const Type value = getPi<Type>() / 4.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -137,8 +137,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     const Type a = 0.0, b = 1;
     const Type value = 2.0 * std::sqrt(getPi<Type>()) * 
         std::tgamma(3.0 / 4.0) / std::tgamma(1.0 / 4.0);
-    const Type tolerance = 1.0e-3;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 1.0e-3;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -151,8 +151,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1;
     const Type value = 2.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -165,8 +165,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = getPi<Type>() / 2.0;
     const Type value = - getPi<Type>() * std::log(2.0) / 2.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -179,8 +179,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = getPi<Type>() / 2.0;
     const Type value = getPi<Type>() * std::sqrt(2.0) / 2.0;
-    const Type tolerance = 1.0e-3;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 1.0e-3;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -192,8 +192,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1.0;
     const Type value = getPi<Type>() / 2.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -205,8 +205,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1.0;
     const Type value = std::sqrt(getPi<Type>());
-    const Type tolerance = 1.0e-3;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 1.0e-3;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -218,8 +218,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1.0;
     const Type value = std::sqrt(getPi<Type>() / 2.0);
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -232,8 +232,8 @@ std::vector<TestProblem<Type>> createTestProblems() {
     };
     const Type a = 0.0, b = 1.0;
     const Type value = 1.0 / 2.0;
-    const Type tolerance = 0.0;
-    TestProblem<Type> problem(function, a, b, value, tolerance);
+    const Type margin = 0.0;
+    TestProblem<Type> problem(function, a, b, value, margin);
     problems.push_back(problem);
     
   }
@@ -247,7 +247,7 @@ public:
 protected:
   virtual void SetUp() {}
   static const std::vector<TestProblem<typename Method::type>> problems;
-  static const std::vector<typename Method::type> errors;
+  static const std::vector<typename Method::type> tolerances;
 };
 
 template <class Method>
@@ -257,20 +257,21 @@ const std::vector<TestProblem<typename Method::type>>
 
 template <class Method>
 const std::vector<typename Method::type> 
-    IntegrationMethodTest<Method>::errors = {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
+    IntegrationMethodTest<Method>::tolerances = 
+        {1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12};
 
 typedef testing::Types<TanhSinhMethod<double>> Types;
 
 TYPED_TEST_CASE(IntegrationMethodTest, Types);
 
-// Check that integration method achieves desired error.
-TYPED_TEST(IntegrationMethodTest, AchievesDesiredError) {
+// Check that integration method achieves desired tolerance.
+TYPED_TEST(IntegrationMethodTest, AchievesDesiredTolerance) {
   using Type = typename TypeParam::type;
-  for (Type error : this->errors) {
-    TypeParam method(error);
+  for (Type tolerance : this->tolerances) {
+    TypeParam method(tolerance);
     for (const TestProblem<Type>& problem : this->problems) {
       Type value = method.integrate(problem.function, problem.a, problem.b);
-      EXPECT_LT(std::abs(value - problem.value), error + problem.tolerance);
+      EXPECT_LT(std::abs(value - problem.value), tolerance + problem.margin);
     }
   }
 }

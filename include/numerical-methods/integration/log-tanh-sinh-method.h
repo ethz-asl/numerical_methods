@@ -10,17 +10,25 @@
 
 namespace numerical_methods {
 
-// This class implements a variation of the tanh-sinh integration method, as 
-// described in Bailey et al. (2005). This variation estimates the natural 
-// logarithm of the integral of an exponential, i.e.
+// This class implements a variation of the tanh-sinh integration method. This 
+// variation computes the natural logarithm of the integral of the exponential 
+// of a function within a given interval, i.e.
 // 
 //         /b
 // y = ln | exp(f(x)) dx
 //       /a
 // 
-// This method is more accurate and numerically more stable than evaluating the 
-// integral, and then computing the logarithm. The implementation is also 
-// simplified for fixed-precision arithmetic.
+// The implementation is based on the implementation of the tanh-sinh method 
+// described in Bailey et al. (2005).
+// 
+// The logarithmic tanh-sinh method is much more accurate and numerically much 
+// more stable than first computing the integral, and then the logarithm. The 
+// logarithm is evaluated directly by exploiting the fact that
+// 
+// ln(exp(a) + exp(b)) = max(a, b) + ln(1 + exp(- abs(a - b)))
+// 
+// when computing the integral. This avoids underflow and overflow, and 
+// preserves the loss of numerical accuracy.
 // 
 // D. H. Bailey, K. Jeyabalan, and X. S. Li, "A Comparison of Three High-
 // precision Quadrature Schemes," in Experimental Mathematics, vol. 14, no. 3, 
@@ -29,13 +37,13 @@ template <typename Type>
 class LogTanhSinhMethod : public IntegrationMethod<Type> {
 public:
   
-  explicit LogTanhSinhMethod(Type error) : 
-      IntegrationMethod<Type>(error), order_(10) {
+  explicit LogTanhSinhMethod(Type tolerance) : 
+      IntegrationMethod<Type>(tolerance), order_(10) {
     initNodes();
   }
   
-  LogTanhSinhMethod(Type error, int order) : 
-      IntegrationMethod<Type>(error), order_(order) {
+  LogTanhSinhMethod(Type tolerance, int order) : 
+      IntegrationMethod<Type>(tolerance), order_(order) {
     CHECK_GT(order, 0) << "Order must be positive.";
     initNodes();
   }
@@ -59,7 +67,7 @@ public:
     
     Type step = 1.0;
     Type sum = - getInf<Type>();
-    Type error = getUndef<Type>();
+    Type tolerance = getUndef<Type>();
     for (int k = 0; k < order_; ++k) {
       
       // Update sum.
@@ -80,15 +88,15 @@ public:
       step /= 2.0;
       values.push_back(std::log(step) + sum);
       
-      // Estimate error and break if desired error achieved.
-      error = estimError(values);
-      if (error <= this->getError()) {
+      // Estimate tolerance and break if desired tolerance achieved.
+      tolerance = estimTolerance(values);
+      if (tolerance <= this->getTolerance()) {
         return values.back();
       }
       
     }
     
-    LOG_IF(WARNING, error <= this->getError())
+    LOG_IF(WARNING, tolerance <= this->getTolerance())
         << "Maximum refinement reached. Results may be inaccurate.";
     return values.back();
     
@@ -117,7 +125,7 @@ private:
   void initNodes() {
     int n = 20 * std::pow(2, order_) + 1;
     const Type h = 1.0 / std::pow(2, order_);
-    const Type t = std::pow(this->getError(), 2);
+    const Type t = std::pow(this->getTolerance(), 2);
     for (int k = 0; k < n; ++k) {
       const Node node(k, h);
       CHECK(!(isUndef(node.point) || isUndef(node.weight)));
@@ -128,8 +136,8 @@ private:
     }
   }
   
-  // Estimate error from previous values.
-  Type estimError(const std::vector<Type>& values) const {
+  // Estimate tolerance from previous values.
+  Type estimTolerance(const std::vector<Type>& values) const {
     int i = values.size() - 1;
     if (i <= 0) {
       return 1.0;
@@ -138,7 +146,7 @@ private:
     const Type a = std::log10(std::abs(values[i + 1] - values[i]));
     const Type b = std::log10(std::abs(values[i + 1] - values[i - 1]));
     if (isUndef<Type>(a) || isUndef<Type>(b)) {
-      return this->getError();
+      return this->getTolerance();
     }
     Type precision = std::max<Type>(std::pow(a, 2) / b, 2.0 * a);
     precision = std::min<Type>(std::max<Type>(precision, 

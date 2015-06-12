@@ -5,30 +5,33 @@
 
 namespace numerical_methods {
 
+// This class is a base class for all integration methods. An integration 
+// method computes the integral of a real-valued function on a given interval, 
+// within a specified tolerance.
 template <typename Type>
 class IntegrationMethod {
 public:
   
   typedef Type type;
   
-  explicit IntegrationMethod(Type error) : error_(error) {
-    CHECK_GT(error, Type(0.0)) << "Desired error must be positive.";
+  explicit IntegrationMethod(Type tolerance) : tolerance_(tolerance) {
+    CHECK_GT(tolerance, Type(0.0)) << "Desired tolerance must be positive.";
   }
   virtual ~IntegrationMethod() {}
   
-  // Return desired error.
-  inline Type getError() const {
-    return error_;
+  // Return desired tolerance.
+  inline Type getTolerance() const {
+    return tolerance_;
   }
   
-  // Integrate function over given interval.
+  // Integrate function over given given interval.
   template <class Function>
   Type integrate(const Function& function, Type a, Type b) const {
     return getUndef<Type>();
   }
   
 private:
-  const Type error_;
+  const Type tolerance_;
   
 }; // IntegrationMethod
 

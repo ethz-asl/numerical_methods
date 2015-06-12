@@ -10,8 +10,25 @@
 
 namespace numerical_methods {
 
-// This class implements the tanh-sinh integration method, as described in 
-// Bailey et al. (2005), simplified for fixed-precision arithmetic.
+// This class implements the tanh-sinh integration method, originally developed 
+// by Takahasi and Mori (1974), and Mori (1985), and benchmarked by Bailey et 
+// al. (2005). In particular, this implementation is based on the description 
+// given in Bailey et al. (2005).
+// 
+// The tahn-sinh method is well suited for general-purpose high-precision 
+// integraion. For functions that are sufficiently well-behaved, the integral 
+// converges exponentially, i.e. doubling the number of evaluation points 
+// roughly doubles the accuracy of the solution. For functions with blow-up 
+// singularities or infinite derivatives at the end-points, the integral is 
+// still usually very accurate, because of the rate of decay of the weight 
+// function in the Euler-Maclaurin formula.
+// 
+// H. Takahasi and M. Mori, "Double-exponential Formulas for Numerical 
+// Integration," in Publ. RIMS, University of Kyoto, vol. 9, pp. 721–741 (1974).
+// 
+// M. Mori, "Quadrature Formulas obtained by Variable Transformations and the 
+// DE Rule," Journal of Computational and Applied Mathematics, vol. 12-13, pp. 
+// 119–130 (1985).
 // 
 // D. H. Bailey, K. Jeyabalan, and X. S. Li, "A Comparison of Three High-
 // precision Quadrature Schemes," in Experimental Mathematics, vol. 14, no. 3, 
@@ -20,13 +37,13 @@ template <typename Type>
 class TanhSinhMethod : public IntegrationMethod<Type> {
 public:
   
-  explicit TanhSinhMethod(Type error) : 
-      IntegrationMethod<Type>(error), order_(10) {
+  explicit TanhSinhMethod(Type tolerance) : 
+      IntegrationMethod<Type>(tolerance), order_(10) {
     initNodes();
   }
   
-  TanhSinhMethod(Type error, int order) : 
-      IntegrationMethod<Type>(error), order_(order) {
+  TanhSinhMethod(Type tolerance, int order) : 
+      IntegrationMethod<Type>(tolerance), order_(order) {
     CHECK_GT(order, 0) << "Order must be positive.";
     initNodes();
   }
@@ -69,8 +86,8 @@ public:
       step /= 2.0;
       values.push_back(step * sum);
       
-      // Estimate error and break if desired error achieved.
-      if (estimError(values) <= this->getError()) {
+      // Estimate tolerance and break if desired tolerance achieved.
+      if (estimTolerance(values) <= this->getTolerance()) {
         return values.back();
       }
       
@@ -102,7 +119,7 @@ private:
   void initNodes() {
     int n = 20 * std::pow(2, order_) + 1;
     const Type h = 1.0 / std::pow(2, order_);
-    const Type t = std::pow(this->getError(), 2);
+    const Type t = std::pow(this->getTolerance(), 2);
     for (int k = 0; k < n; ++k) {
       const Node node(k, h);
       CHECK(!(isUndef(node.point) || isUndef(node.weight)));
@@ -113,8 +130,8 @@ private:
     }
   }
   
-  // Estimate error from previous values.
-  Type estimError(const std::vector<Type>& values) const {
+  // Estimate tolerance from previous values.
+  Type estimTolerance(const std::vector<Type>& values) const {
     int i = values.size() - 1;
     if (i <= 0) {
       return 1.0;
@@ -123,7 +140,7 @@ private:
     const Type a = std::log10(std::abs(values[i + 1] - values[i]));
     const Type b = std::log10(std::abs(values[i + 1] - values[i - 1]));
     if (isUndef<Type>(a) || isUndef<Type>(b)) {
-      return this->getError();
+      return this->getTolerance();
     }
     Type precision = std::max<Type>(std::pow(a, 2) / b, 2.0 * a);
     precision = std::min<Type>(std::max<Type>(precision, 
