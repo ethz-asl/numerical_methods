@@ -31,7 +31,7 @@ public:
     covariance_.setZero();
   }
   template <bool Static = Size != Eigen::Dynamic>
-  IncrementalStatistics(Type discount, 
+  explicit IncrementalStatistics(Type discount, 
       typename std::enable_if<Static>::type* = nullptr) : 
       dimension_(Size), 
       discount_(discount), 
@@ -56,7 +56,7 @@ public:
     covariance_.setZero();
   }
   template <bool Dynamic = Size == Eigen::Dynamic>
-  explicit IncrementalStatistics(int dimension, Type discount, 
+  IncrementalStatistics(int dimension, Type discount, 
       typename std::enable_if<Dynamic>::type* = nullptr) : 
       dimension_(dimension), 
       discount_(discount), 
@@ -100,6 +100,7 @@ public:
   
   // Incrementally update the statistics as new data become available.
   void update(const Eigen::Matrix<Type, Size, 1>& point, Type weight) {
+    CHECK_EQ(point.size(), dimension_) << "Point has wrong size.";
     if (weight == 0.0) {
       return;
     }

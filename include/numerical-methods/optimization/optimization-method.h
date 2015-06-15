@@ -28,7 +28,6 @@ public:
   }
   virtual ~OptimizationMethod() {}
   
-  // Return dimension.
   inline int getDimension() const {
     return dimension_;
   }
