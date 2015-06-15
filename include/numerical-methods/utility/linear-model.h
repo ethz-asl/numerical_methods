@@ -7,7 +7,7 @@
 #include <glog/logging.h>
 
 #include "numerical-methods/common-definitions.h"
-#include "numerical-methods/utility/sufficient-statistics.h"
+#include "numerical-methods/utility/incremental-statistics.h"
 
 namespace numerical_methods {
 
@@ -146,14 +146,14 @@ public:
     const Eigen::Matrix<Type, Size, Size>& 
         covariance = statistics_.getCovariance();
     
-    Eigen::Matrix<Type, Size, 1> regularizer(dimension_)
+    Eigen::Matrix<Type, Size, 1> regularizer(dimension_);
     regularizer.fill(regularizer_);
     
     // Update model parameters.
     coefficients_ = (covariance.topLeftCorner(dimension_, dimension_) + 
         regularizer.asDiagonal()).ldlt()
             .solve(covariance.topRightCorner(dimension_, 1));
-    bias_ = mean_(dimension_) - mean_.head(dimension_).dot(coefficients_);
+    bias_ = mean(dimension_) - mean.head(dimension_).dot(coefficients_);
     
   }
   
@@ -169,8 +169,8 @@ private:
   const Type regularizer_;
   
   typename std::conditional<Size != Eigen::Dynamic, 
-      SufficientStatistics<Type, Size + 1>, 
-      SufficientStatistics<Type, Size>>::type statistics_;
+      IncrementalStatistics<Type, Size + 1>, 
+      IncrementalStatistics<Type, Size>>::type statistics_;
   
   Eigen::Matrix<Type, Size, 1> coefficients_;
   Type bias_;
