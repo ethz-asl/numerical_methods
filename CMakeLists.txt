@@ -44,5 +44,14 @@ target_link_libraries(test_incremental_statistics
   pthread
 )
 
+# Linear model utility.
+catkin_add_gtest(test_linear_model 
+  test/test-linear-model.cc
+)
+target_link_libraries(test_linear_model 
+  ${PROJECT_NAME} 
+  pthread
+)
+
 cs_install()
 cs_export()

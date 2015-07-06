@@ -24,7 +24,8 @@ public:
       dimension_(Size), 
       discount_(0.0), 
       regularizer_(0.0), 
-      bias_(0.0) {
+      bias_(0.0), 
+      valid_(true) {
     coefficients_.setZero();
   }
   template <bool Static = Size != Eigen::Dynamic>
@@ -35,7 +36,8 @@ public:
       regularizer_(0.0), 
       statistics_(discount), 
       coefficients_(Size), 
-      bias_(0.0) {
+      bias_(0.0), 
+      valid_(true) {
     CHECK_GE(discount, 0.0) << "Discount factor must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount factor must not exceed one.";
     coefficients_.setZero();
@@ -48,7 +50,8 @@ public:
       regularizer_(regularizer), 
       statistics_(discount), 
       coefficients_(Size), 
-      bias_(0.0) {
+      bias_(0.0), 
+      valid_(true) {
     CHECK_GE(discount, 0.0) << "Discount factor must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount factor must not exceed one.";
     CHECK_GE(regularizer, 0.0) << "Regularizer must be non-negative.";
@@ -62,7 +65,8 @@ public:
       regularizer_(0.0), 
       statistics_(dimension + 1), 
       coefficients_(dimension), 
-      bias_(0.0) {
+      bias_(0.0), 
+      valid_(true) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
     coefficients_.setZero();
   }
@@ -74,7 +78,8 @@ public:
       regularizer_(0.0), 
       statistics_(dimension + 1, discount), 
       coefficients_(dimension), 
-      bias_(0.0) {
+      bias_(0.0), 
+      valid_(true) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
     CHECK_GE(discount, 0.0) << "Discount factor must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount factor must not exceed one.";
@@ -88,7 +93,8 @@ public:
       regularizer_(regularizer), 
       statistics_(dimension + 1, discount), 
       coefficients_(dimension), 
-      bias_(0.0) {
+      bias_(0.0), 
+      valid_(true) {
     CHECK_GT(dimension, 0) << "Dimension must be positive.";
     CHECK_GE(discount, 0.0) << "Discount factor must be non-negative.";
     CHECK_LE(discount, 1.0) << "Discount factor must not exceed one.";
@@ -105,17 +111,16 @@ public:
   }
   
   inline const Eigen::Matrix<Type, Size, 1>& getCoefficients() const {
+    if (!valid_) {
+      evaluate();
+    }
     return coefficients_;
   }
   inline Type getBias() const {
+    if (!valid_) {
+      evaluate();
+    }
     return bias_;
-  }
-  inline void setCoefficients(
-      const Eigen::Matrix<Type, Size, 1>& coefficients) {
-    coefficients_ = coefficients;
-  }
-  inline void setBias(const Type bias) {
-    bias_ = bias;
   }
   
   // Reset the model.
@@ -123,57 +128,71 @@ public:
     statistics_.clear();
     coefficients_.setZero();
     bias_ = 0.0;
+    valid_ = true;
   }
   
-  // Incrementally update the model as new data become available.
+  // Incrementally update statistics as new data become available.
   void update(const Eigen::Matrix<Type, Size, 1>& predictors, Type response, 
       Type weight) {
     
-    CHECK_EQ(predictors.size(), dimension_) << "Predictors have wrong size.";
+    CHECK_EQ(predictors.size(), dimension_) 
+        << "Predictors have the wrong size.";
     
     // Concatenate predictors and response.
     typename std::conditional<Size != Eigen::Dynamic, 
       Eigen::Matrix<Type, Size + 1, 1>, 
       Eigen::Matrix<Type, Size, 1>>::type point(dimension_ + 1);
-    point << predictors;
     point.head(dimension_) = predictors;
     point(dimension_) = response;
     
     // Update sufficient statistics.
     statistics_.update(point, weight);
     
-    const Eigen::Matrix<Type, Size, 1> mean = statistics_.getMean();
-    const Eigen::Matrix<Type, Size, Size>& 
-        covariance = statistics_.getCovariance();
-    
-    Eigen::Matrix<Type, Size, 1> regularizer(dimension_);
-    regularizer.fill(regularizer_);
-    
-    // Update model parameters.
-    coefficients_ = (covariance.topLeftCorner(dimension_, dimension_) + 
-        regularizer.asDiagonal()).ldlt()
-            .solve(covariance.topRightCorner(dimension_, 1));
-    bias_ = mean(dimension_) - mean.head(dimension_).dot(coefficients_);
-    
   }
   
-  // Incrementally update the model with a default weight.
+  // Incrementally update statistics with default weight.
   void update(const Eigen::Matrix<Type, Size, 1>& predictors, Type response) {
     update(predictors, response, 1.0);
   }
   
 private:
   
+  // Model size and parameters.
   const int dimension_;
   const Type discount_;
   const Type regularizer_;
   
+  // Sufficient statistics.
   typename std::conditional<Size != Eigen::Dynamic, 
       IncrementalStatistics<Type, Size + 1>, 
       IncrementalStatistics<Type, Size>>::type statistics_;
   
-  Eigen::Matrix<Type, Size, 1> coefficients_;
-  Type bias_;
+  // Regression coefficients and bias term.
+  mutable Eigen::Matrix<Type, Size, 1> coefficients_;
+  mutable Type bias_;
+  
+  mutable bool valid_;
+  
+  void evaluate() const {
+    
+    const Eigen::Matrix<Type, Size, 1>& mean = statistics_.getMean();
+    const Eigen::Matrix<Type, Size, Size>& 
+        covariance = statistics_.getCovariance();
+    
+    Eigen::Matrix<Type, Size, 1> regularizer(dimension_);
+    regularizer.fill(regularizer_);
+    
+    // Update regression coefficients based on sufficient statistics.
+    coefficients_ = (covariance.topLeftCorner(dimension_, dimension_) + 
+        regularizer.asDiagonal()).ldlt().solve(covariance.topRightCorner(
+            dimension_, 1));
+    
+    // Update bias term.
+    bias_ = mean(dimension_) - mean.head(dimension_).dot(coefficients_);
+    
+    valid_ = true;
+    
+  }
   
 }; // LinearModel
 
