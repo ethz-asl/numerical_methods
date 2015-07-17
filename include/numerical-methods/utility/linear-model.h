@@ -109,6 +109,9 @@ public:
   inline Type getDiscount() const {
     return discount_;
   }
+  inline Type getRegularizer() const {
+    return regularizer_;
+  }
   
   inline const Eigen::Matrix<Type, Size, 1>& getCoefficients() const {
     if (!valid_) {
@@ -140,8 +143,8 @@ public:
     
     // Concatenate predictors and response.
     typename std::conditional<Size != Eigen::Dynamic, 
-      Eigen::Matrix<Type, Size + 1, 1>, 
-      Eigen::Matrix<Type, Size, 1>>::type point(dimension_ + 1);
+        Eigen::Matrix<Type, Size + 1, 1>, 
+        Eigen::Matrix<Type, Size, 1>>::type point(dimension_ + 1);
     point.head(dimension_) = predictors;
     point(dimension_) = response;
     
@@ -175,17 +178,18 @@ private:
   
   void evaluate() const {
     
-    const Eigen::Matrix<Type, Size, 1>& mean = statistics_.getMean();
-    const Eigen::Matrix<Type, Size, Size>& 
+    const typename std::conditional<Size != Eigen::Dynamic, 
+        Eigen::Matrix<Type, Size + 1, 1>, 
+        Eigen::Matrix<Type, Size, 1>>::type& mean = statistics_.getMean();
+    const typename std::conditional<Size != Eigen::Dynamic, 
+        Eigen::Matrix<Type, Size + 1, Size + 1>, 
+        Eigen::Matrix<Type, Size, Size>>::type& 
         covariance = statistics_.getCovariance();
-    
-    Eigen::Matrix<Type, Size, 1> regularizer(dimension_);
-    regularizer.fill(regularizer_);
     
     // Update regression coefficients based on sufficient statistics.
     coefficients_ = (covariance.topLeftCorner(dimension_, dimension_) + 
-        regularizer.asDiagonal()).ldlt().solve(covariance.topRightCorner(
-            dimension_, 1));
+        regularizer_ * Eigen::Matrix<Type, Size, Size>::Identity(dimension_, 
+            dimension_)).ldlt().solve(covariance.topRightCorner(dimension_, 1));
     
     // Update bias term.
     bias_ = mean(dimension_) - mean.head(dimension_).dot(coefficients_);
