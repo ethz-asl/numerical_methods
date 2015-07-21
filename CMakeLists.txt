@@ -35,6 +35,15 @@ target_link_libraries(test_optimization_methods
   pthread
 )
 
+# Special functions.
+catkin_add_gtest(test_special_functions 
+  test/test-special-functions.cc
+)
+target_link_libraries(test_special_functions 
+  ${PROJECT_NAME} 
+  pthread
+)
+
 # Incremental statistics utility.
 catkin_add_gtest(test_incremental_statistics 
   test/test-incremental-statistics.cc

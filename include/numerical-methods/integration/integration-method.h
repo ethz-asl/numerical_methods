@@ -19,7 +19,6 @@ public:
   }
   virtual ~IntegrationMethod() {}
   
-  // Return desired tolerance.
   inline Type getTolerance() const {
     return tolerance_;
   }
