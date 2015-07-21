@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "numerical-methods/common-definitions.h"
-#include "numerical-methods/utility/linear-model.h"
+#include "numerical-methods/utility/incremental-statistics.h"
 
 namespace numerical_methods {
 
