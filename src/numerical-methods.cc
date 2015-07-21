@@ -4,6 +4,7 @@
 #include "numerical-methods/optimization/nelder-mead-method.h"
 
 #include "numerical-methods/utility/incremental-statistics.h"
+#include "numerical-methods/utility/linear-model.h"
 
 namespace numerical_methods {
 
