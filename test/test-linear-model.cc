@@ -74,7 +74,7 @@ public:
       const Type weight = weights_(i) * std::pow(1.0 - discount, size_ - 1 - i);
       const Eigen::Matrix<Type, Size, 1> residual = predictors_.col(i) - mean;
       covariance += weight * residual * residual.transpose();
-      cross_covariance += weight * residual * (responses_(i) - average);
+      cross_covariance += (weight * (responses_(i) - average)) * residual;
     }
     covariance /= sum;
     cross_covariance /= sum;
@@ -152,7 +152,7 @@ protected:
 template <class Model>
 const std::vector<int> 
     LinearModelTest<Model>::sizes = 
-        {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000};
+        {10, 20, 50, 100, 200, 500, 1000};
 
 template <class Model>
 const std::vector<typename Model::type> 
@@ -161,7 +161,7 @@ const std::vector<typename Model::type>
 
 template <class Model>
 const std::vector<typename Model::type> 
-    LinearModelTest<Model>::regularizers = {0.0, 0.01, 0.1, 1.0};
+    LinearModelTest<Model>::regularizers = {0.001, 0.01, 0.1, 1.0, 10.0};
 
 template <class Model>
 const typename Model::type LinearModelTest<Model>::tolerance = 
@@ -184,7 +184,7 @@ TYPED_TEST_CASE(StaticLinearModelTest, StaticTypes);
 // Check that batch and incremental estimates are the same.
 TYPED_TEST(StaticLinearModelTest, IsEqualToBatch) {
   const int dimension = this->dimension;
-  for (int size : this->sizes) {
+  for (const int size : this->sizes) {
     
     using Type = typename TypeParam::type;
     const int Size = TypeParam::size;
@@ -195,8 +195,8 @@ TYPED_TEST(StaticLinearModelTest, IsEqualToBatch) {
     ASSERT_EQ(sample.getDimension(), dimension);
     ASSERT_EQ(sample.getSize(), size);
     
-    for (Type discount : this->discounts) {
-      for (Type regularizer : this->regularizers) {
+    for (const Type discount : this->discounts) {
+      for (const Type regularizer : this->regularizers) {
         
         // Fit parameters.
         const std::pair<Eigen::Matrix<Type, Size, 1>, Type> 
@@ -252,8 +252,8 @@ TYPED_TEST_CASE(DynamicLinearModelTest, DynamicTypes);
 
 // Check that batch and incremental estimates are the same.
 TYPED_TEST(DynamicLinearModelTest, IsEqualToBatch) {
-  for (int dimension : this->dimensions) {
-    for (int size : this->sizes) {
+  for (const int dimension : this->dimensions) {
+    for (const int size : this->sizes) {
       
       using Type = typename TypeParam::type;
       const int Size = TypeParam::size;
@@ -264,8 +264,8 @@ TYPED_TEST(DynamicLinearModelTest, IsEqualToBatch) {
       ASSERT_EQ(sample.getDimension(), dimension);
       ASSERT_EQ(sample.getSize(), size);
       
-      for (Type discount : this->discounts) {
-        for (Type regularizer : this->regularizers) {
+      for (const Type discount : this->discounts) {
+        for (const Type regularizer : this->regularizers) {
           
           // Fit parameters.
           const std::pair<Eigen::Matrix<Type, Size, 1>, Type> 
@@ -274,7 +274,7 @@ TYPED_TEST(DynamicLinearModelTest, IsEqualToBatch) {
           const Eigen::Matrix<Type, Size, 1> coefficients = parameters.first;
           const Type bias = parameters.second;
           
-          LinearModel<Type, Size> model(discount, regularizer);
+          LinearModel<Type, Size> model(dimension, discount, regularizer);
           
           ASSERT_EQ(model.getDimension(), dimension);
           ASSERT_EQ(model.getDiscount(), discount);

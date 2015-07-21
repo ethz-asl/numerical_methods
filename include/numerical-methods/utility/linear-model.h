@@ -113,15 +113,23 @@ public:
     return regularizer_;
   }
   
+  const typename std::conditional<Size != Eigen::Dynamic, 
+      IncrementalStatistics<Type, Size + 1>, 
+      IncrementalStatistics<Type, Size>>::type& getStatistics() const {
+    return statistics_;
+  }
+  
   inline const Eigen::Matrix<Type, Size, 1>& getCoefficients() const {
     if (!valid_) {
       evaluate();
+      valid_ = true;
     }
     return coefficients_;
   }
   inline Type getBias() const {
     if (!valid_) {
       evaluate();
+      valid_ = true;
     }
     return bias_;
   }
@@ -150,6 +158,8 @@ public:
     
     // Update sufficient statistics.
     statistics_.update(point, weight);
+    
+    valid_ = false;
     
   }
   
@@ -193,8 +203,6 @@ private:
     
     // Update bias term.
     bias_ = mean(dimension_) - mean.head(dimension_).dot(coefficients_);
-    
-    valid_ = true;
     
   }
   
