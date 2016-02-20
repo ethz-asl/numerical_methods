@@ -26,7 +26,7 @@ public:
   
   // Integrate function over given given interval.
   template <class Function>
-  Type integrate(const Function& function, Type a, Type b) const {
+  Type integrate(const Function& /*function*/, Type /*a*/, Type /*b*/) const {
     return getUndef<Type>();
   }
   
